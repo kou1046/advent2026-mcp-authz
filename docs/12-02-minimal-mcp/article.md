@@ -21,7 +21,7 @@ SDK を使えば数行で書けてしまいますが、それだと中で何が�
 
 ## claude.ai に登録できる (remote) MCP サーバーに最低限要るもの
 
-要るものは、大きく2つに分かれます。MCP として正しく話せること（プロトコルの要件）と、claude.ai から届く場所にいること（インフラの要件）です。
+要るものは、大きく2つに分かれます。MCP として正しく話せること（プロトコルの要件）と、claude.ai から届く場所にいること（ネットワークの要件）です。
 
 ### プロトコルの要件
 
@@ -65,7 +65,7 @@ initialize → notifications/initialized → tools/list → tools/call
 
 HTTP のヘッダーにも決まりが増えています。`MCP-Protocol-Version`、`Mcp-Method`、`tools/call` なら `Mcp-Name` を付けて、本文の中身と同じ値にします。本文を読まずに振り分けたいプロキシのためのもので、食い違っていたらサーバーは 400 で断ります。
 
-### インフラの要件
+### ネットワークの要件
 
 出典：[claude.ai のコネクターのトラブルシューティング](https://claude.com/docs/connectors/building/troubleshooting)
 
@@ -134,7 +134,7 @@ curl http://127.0.0.1:8080/mcp \
 <p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="720"></p>
 <p align="center"><sub>図1：claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー</sub></p>
 
-インフラの要件を満たすために、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。`https://….trycloudflare.com` の URL がもらえて、IPv4 でも届きます。
+ネットワークの要件を満たすために、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。`https://….trycloudflare.com` の URL がもらえて、IPv4 でも届きます。
 
 ただ、OAuth を使っていないので、URL を知っていれば誰でも書き込めてしまいます。そこで、前に nginx を置いて、claude.ai が繋ぎに来る IP の範囲だけを通しています。試し終わったら、トンネルは閉じておきましょう。
 
@@ -197,7 +197,7 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 - `tools/call`：ツールを実行する。ツールとしての失敗は `isError` で返す
 - 毎回のリクエストで、`_meta` の版とヘッダーを確かめる
 
-インフラの要件
+ネットワークの要件
 
 - インターネットから IPv4 で届く `https://` の URL
 - 前で絞るなら、Anthropic の IP の範囲を通す
