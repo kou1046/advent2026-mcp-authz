@@ -1,6 +1,6 @@
 ---
 title: SDK なしで MCP サーバーを書いてみたら、initialize がなくなっていた
-tags: MCP JSON-RPC Go nginx Claude
+tags: MCP JSON-RPC Go Claude
 ---
 <!-- TODO: タイトルは仮 -->
 
@@ -54,18 +54,15 @@ initialize → notifications/initialized → tools/list → tools/call
 
 HTTP のヘッダーにも決まりが増えています。`MCP-Protocol-Version`、`Mcp-Method`、`tools/call` なら `Mcp-Name` を付けて、本文の中身と同じ値にします。本文を読まずに振り分けたいプロキシのためのもので、食い違っていたらサーバーは 400 で断ります。
 
-<!-- TODO: 他に細かい決まり（resultType、ttlMs / cacheScope、GET は 405、Origin の確認）をどこまで書くか。表にまとめるか削るか -->
+## 作ってみる
 
-## 作ったもの
-
-<p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="720"></p>
-<p align="center"><sub>図1：claude.ai → Cloudflare → cloudflared → nginx（claude.ai の IP だけ通す）→ MCP サーバー</sub></p>
+<!-- TODO: コードの置き場所（リポジトリを公開したらリンク） -->
 
 ### 新旧どちらの版にも応える
 
 作り始める前に、気になったことがありました。claude.ai は、もう新しい版で話しかけてくるのでしょうか。まだ `initialize` から始める古い版かもしれませんよね。
 
-わからないので、両方に応えるようにしました。`_meta` にバージョンが載っていれば新しい版として、載っていなければ古い版として処理します。古い版で来たときも、セッション ID は発行せず、状態を持たないまま応えます。
+わからないので、両方に応えるようにしました。`_meta` にバージョンが載っていれば新しい版として、載っていなければ古い版として処理します。
 
 ### ツールの失敗と、プロトコルのエラーを分ける
 
@@ -80,50 +77,58 @@ HTTP のヘッダーにも決まりが増えています。`MCP-Protocol-Version
 {"content": [{"type": "text", "text": "メモ n9 は見つかりません"}], "isError": true, "resultType": "complete"}
 ```
 
-### 公開するときの守り
+### curl で叩いてみる
 
-claude.ai は Anthropic のサーバーから繋いでくるので、手元の `localhost` には届きません。なので、Cloudflare のトンネル（cloudflared）で一時的に外へ出しています。
+まずは手元から `server/discover` を叩いてみます。
 
-ただ、トンネルの URL は、知っていれば誰でも叩けてしまいます。このサーバーにはまだ認可がないので、何もしなければ書き込み放題です。なので、前に nginx を置いて、claude.ai が繋ぎに来る IP の範囲だけを通すようにしました。範囲は [Anthropic が公開しています](https://platform.claude.com/docs/en/api/ip-addresses)。
-
-```nginx
-# cloudflared から来たときだけ、Cloudflare が付ける本当の接続元を信じる。
-set_real_ip_from 172.28.0.10;
-real_ip_header   CF-Connecting-IP;
-
-allow 160.79.104.0/21;
-allow 153.61.208.0/20;
-deny  all;
+```sh
+curl http://127.0.0.1:8080/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -H 'MCP-Protocol-Version: 2026-07-28' \
+  -H 'Mcp-Method: server/discover' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}'
 ```
 
-`CF-Connecting-IP` はただのヘッダーなので、誰が付けても信じてしまうと、接続元を偽れてしまいます。なので、信じるのは cloudflared のコンテナから来たときだけにしています。実際に、別のコンテナから claude.ai の IP を名乗らせてみると、ちゃんと 403 になりました。
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "resultType": "complete",
+    "supportedVersions": ["2026-07-28"],
+    "capabilities": {"tools": {}},
+    "instructions": "メモを読み書きするサーバーです。read_note で一覧か1件を読み、write_note で新しいメモを書きます。",
+    "ttlMs": 3600000,
+    "cacheScope": "public",
+    "_meta": {"io.modelcontextprotocol/serverInfo": {"name": "advent-notes", "version": "0.1.0"}}
+  }
+}
+```
 
-nginx は 1.30.7 を使っています。2026-11 に HTTP/2 まわりの RCE（CVE-2026-123007 など）が直った版です。
-
-これで「claude.ai を通さない人」は弾けます。ただ、claude.ai を使っている人なら、URL さえ知っていれば誰でも入れてしまいます。それがどういうことかは、次回確かめます。試し終わったらトンネルは閉じておきましょう。
-
-## curl で叩いてみる
-
-<!-- TODO: server/discover と tools/list のリクエスト・レスポンスを載せる（長いので一部を省略） -->
+`capabilities` に `tools` があるので、「このサーバーはツールを持っている」とクライアントに伝わります。
 
 ## claude.ai から繋いでみる
 
+<p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="720"></p>
+<p align="center"><sub>図1：claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー</sub></p>
+
+claude.ai は Anthropic のサーバーから繋いでくるので、手元の `localhost` には届きません。なので、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。まだ認可がないので、前に nginx を置いて、claude.ai が繋ぎに来る IP の範囲（[Anthropic が公開しています](https://platform.claude.com/docs/en/api/ip-addresses)）だけを通しています。試し終わったら、トンネルは閉じておきましょう。
+
 カスタムコネクターに、トンネルの URL を「サインインなし」で登録してみました。そのときサーバーに届いたリクエストがこちらです。
 
-| 時刻 (UTC) | 接続元 | User-Agent | 版 | メソッド |
-|---|---|---|---|---|
-| 09:26:14 | 160.79.106.143 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
-| 09:26:18 | 160.79.106.132 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
-| 09:26:18 | 160.79.106.140 | Claude-User | 2026-07-28 | `server/discover` |
-| 09:26:18 | 160.79.106.163 | Claude-User | 2026-07-28 | `tools/list` |
-| 09:26:19 | 160.79.106.177 | Claude-User | 2026-07-28 | `server/discover` |
-| 09:26:19 | 160.79.106.177 | Claude-User | 2026-07-28 | `tools/list` |
+| 時刻 (UTC) | User-Agent | 版 | メソッド |
+|---|---|---|---|
+| 09:26:14 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
+| 09:26:18 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
+| 09:26:18 | Claude-User | 2026-07-28 | `server/discover` |
+| 09:26:18 | Claude-User | 2026-07-28 | `tools/list` |
+| 09:26:19 | Claude-User | 2026-07-28 | `server/discover` |
+| 09:26:19 | Claude-User | 2026-07-28 | `tools/list` |
 
 claude.ai は、もう新しい版で話しかけてきていました。`Claude-User` のリクエストは `server/discover` から始まっていて、`initialize` は使っていません。
 
-ただ、その前に、別の User-Agent（`python-httpx`）から古い版の `initialize` も届いています。こちらは `initialize` を送ったきりで、続きがありません。登録し直しても同じ順で来たので、登録のときの疎通確認なのかな、と思っていますが、確かめたわけではありません。新旧どちらにも応えるようにしておいたので、気づけたところですね。
-
-接続元の IP は、リクエストのたびに変わっていました。どれも公開されている範囲に入っていたので、nginx で絞っても claude.ai は困らないことがわかります。
+ただ、その前に、別の User-Agent（`python-httpx`）から古い版の `initialize` も届いています。送ったきりで続きがないので、登録のときの疎通確認なのかな、と思っていますが、確かめたわけではありません。新旧どちらにも応えるようにしておいたので、気づけたところですね。
 
 ### ツールを使わせてみる
 
@@ -142,25 +147,28 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 | 09:28:26 | `tools/call`（`write_note`） | `1` |
 | 09:28:30 | `tools/call`（`read_note`） | `2` |
 
-ツールを呼ぶ前に、`server/discover` が2回来ています。2回目は id が `server-discover-probe-1` という名前なので、「このサーバーは新しい版で話せるか」を確かめてから使い始めているように見えます。推測ですが、ログを見ているとこういう細かい動きがわかって面白いですね。
+`server/discover` で確かめて、`tools/list` で一覧を取って、`tools/call` で呼ぶ。さっきの3つのメソッドが、そのまま順に使われています。
 
-その後は `tools/list`（id `0`）で一覧を取って、`write_note`（id `1`）、`read_note`（id `2`）と順に呼んでいます。
-
-書き込まれたメモは、サーバーから見るとこうなっています。
-
-```json
-{"id": "n1", "owner": "anonymous", "title": "テストメモ", "body": "MCP 動作確認用のメモです。2026-11-22 18:28 (JST) に作成。"}
-```
-
-`owner` は `anonymous` です。認可がないので、誰が書いたのかはサーバーにはわかりません。
+書き込まれたメモの `owner` は `anonymous` です。認可がないので、誰が書いたのかはサーバーにはわかりません。
 
 ## 壊してみる
 
-<!-- TODO: -break の3つを claude.ai で試した結果
-- no-initialize：initialize / server/discover に「そんなメソッドはない」
-- bad-version：存在しない版を返す
-- bad-schema：inputSchema を null にする
+最低限の3つは、本当に全部要るのでしょうか。わざと壊して、claude.ai がどうなるかを見てみます。
+
+<!-- TODO: claude.ai で試した結果
+- no-initialize：initialize / server/discover に「そんなメソッドはない」と返す → 登録で止まる？ツールまでは行ける？
+- bad-schema：ツールの inputSchema を null にする → 一覧から外れる？全部拒否？
 -->
+
+## まとめ：MCP サーバーに最低限要るもの
+
+<!-- TODO: 壊してみた結果を受けて書き直す -->
+
+- 1つの URL で POST を受けて、JSON-RPC で応える
+- `server/discover`：自分の名前、対応している版、機能を返す
+- `tools/list`：ツールの一覧と、引数の形（JSON Schema）を返す
+- `tools/call`：ツールを実行する。ツールとしての失敗は `isError` で返す
+- 毎回のリクエストで、`_meta` の版とヘッダーを確かめる
 
 ## 感想
 
