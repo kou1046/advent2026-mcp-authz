@@ -56,12 +56,8 @@ HTTP のヘッダーにも決まりが増えています。`MCP-Protocol-Version
 
 ## 作ったもの
 
-<!-- TODO: 構成図（draw.io） -->
-
-```mermaid
-flowchart LR
-  C["claude.ai"] --> CF["Cloudflare"] --> T["cloudflared"] --> N["nginx<br>claude.ai の IP だけ通す"] --> M["MCP サーバー<br>(Go)"]
-```
+<p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="720"></p>
+<p align="center"><sub>図1：claude.ai → Cloudflare → cloudflared → nginx（claude.ai の IP だけ通す）→ MCP サーバー</sub></p>
 
 ### 新旧どちらの版にも応える
 
@@ -131,7 +127,10 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 
 続いて、チャットで「メモを書いて、それから一覧を見せて」と頼んでみました。
 
-<!-- TODO: claude.ai のチャット画面のスクショ -->
+<p align="center"><img src="images/chat-write-read.png" alt="claude.ai でメモを書いて一覧を見せてもらう" width="600" style="border: 1px solid #999"></p>
+<p align="center"><sub>図2：「メモを書く」「メモを読む」を順に使って、書いたメモの一覧を返してくれた</sub></p>
+
+画面には、ツール名の `write_note` ではなく「メモを書く」と出ていますね。`tools/list` で返した `title` が、そのまま表示に使われています。
 
 | 時刻 (UTC) | メソッド | JSON-RPC の id |
 |---|---|---|
