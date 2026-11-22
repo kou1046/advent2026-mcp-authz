@@ -14,12 +14,16 @@ SDK を使えば数行で書けてしまいますが、それだと中で何が�
 
 先に、前提を2つ置いておきます。
 
-- 公開する必要がある：claude.ai は、手元の PC ではなく Anthropic のサーバーから繋いできます。なので、`localhost` で動かしているだけでは届かず、インターネットに公開する必要があります
+- 公開する必要がある：claude.ai は、手元の PC ではなく Anthropic のサーバーから繋いできます。`localhost` で動かしているだけでは届きません（詳しくは後で）
 - OAuth は使わない：前回見た認可の流れは、今回はまったく使いません。カスタムコネクターも「サインインなし」で登録します
 
 つまり今回作るのは、「誰でも叩ける場所に置かれた、認可のない MCP サーバー」です。これがどういうことかは最後に考えるとして、まずは動くところまで持っていきます。
 
-## MCP サーバーに最低限要るもの
+## claude.ai に登録できる (remote) MCP サーバーに最低限要るもの
+
+要るものは、大きく2つに分かれます。MCP として正しく話せること（プロトコルの要件）と、claude.ai から届く場所にいること（インフラの要件）です。
+
+### プロトコルの要件
 
 仕様：[MCP 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28)
 
@@ -60,6 +64,16 @@ initialize → notifications/initialized → tools/list → tools/call
 | `tools/call` | ツールを実行して、結果を返す |
 
 HTTP のヘッダーにも決まりが増えています。`MCP-Protocol-Version`、`Mcp-Method`、`tools/call` なら `Mcp-Name` を付けて、本文の中身と同じ値にします。本文を読まずに振り分けたいプロキシのためのもので、食い違っていたらサーバーは 400 で断ります。
+
+### インフラの要件
+
+出典：[claude.ai のコネクターのトラブルシューティング](https://claude.com/docs/connectors/building/troubleshooting)
+
+claude.ai は、手元の PC ではなく Anthropic のサーバーから繋いできます。なので、プロトコルを正しく話せても、届かなければ意味がありません。
+
+- インターネットから届く `https://` の URL があること。`localhost` やプライベートなアドレス（`192.168.x.x` など）に解決される URL は、claude.ai の側で断られます
+- IPv4 で届くこと。コネクターは IPv4 にしか繋がないので、IPv6 だけのホストには届きません
+- 前に WAF やファイアウォールを置くなら、Anthropic が繋ぎに来る IP の範囲（[公開されています](https://platform.claude.com/docs/en/api/ip-addresses)）を通すこと
 
 ## 作ってみる
 
@@ -115,12 +129,16 @@ curl http://127.0.0.1:8080/mcp \
 
 `capabilities` に `tools` があるので、「このサーバーはツールを持っている」とクライアントに伝わります。
 
-## claude.ai から繋いでみる
+### 公開する
 
 <p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="720"></p>
 <p align="center"><sub>図1：claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー</sub></p>
 
-最初に書いたとおり、claude.ai から繋ぐには公開する必要があります。なので、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。ただ、OAuth を使っていないので、URL を知っていれば誰でも書き込めてしまいます。そこで、前に nginx を置いて、claude.ai が繋ぎに来る IP の範囲（[Anthropic が公開しています](https://platform.claude.com/docs/en/api/ip-addresses)）だけを通しています。試し終わったら、トンネルは閉じておきましょう。
+インフラの要件を満たすために、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。`https://….trycloudflare.com` の URL がもらえて、IPv4 でも届きます。
+
+ただ、OAuth を使っていないので、URL を知っていれば誰でも書き込めてしまいます。そこで、前に nginx を置いて、claude.ai が繋ぎに来る IP の範囲だけを通しています。試し終わったら、トンネルは閉じておきましょう。
+
+## claude.ai から繋いでみる
 
 カスタムコネクターに、トンネルの URL を「サインインなし」で登録してみました。そのときサーバーに届いたリクエストがこちらです。
 
@@ -167,15 +185,22 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 - bad-schema：ツールの inputSchema を null にする → 一覧から外れる？全部拒否？
 -->
 
-## まとめ：MCP サーバーに最低限要るもの
+## まとめ：claude.ai に登録できる (remote) MCP サーバーに最低限要るもの
 
 <!-- TODO: 壊してみた結果を受けて書き直す -->
+
+プロトコルの要件
 
 - 1つの URL で POST を受けて、JSON-RPC で応える
 - `server/discover`：自分の名前、対応している版、機能を返す
 - `tools/list`：ツールの一覧と、引数の形（JSON Schema）を返す
 - `tools/call`：ツールを実行する。ツールとしての失敗は `isError` で返す
 - 毎回のリクエストで、`_meta` の版とヘッダーを確かめる
+
+インフラの要件
+
+- インターネットから IPv4 で届く `https://` の URL
+- 前で絞るなら、Anthropic の IP の範囲を通す
 
 ## 感想
 
