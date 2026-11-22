@@ -12,6 +12,13 @@ MCP サーバーとして claude.ai に認識してもらうには、最低限�
 
 SDK を使えば数行で書けてしまいますが、それだと中で何が行き来しているのかが見えませんよね。なので今回は、SDK を使わずに JSON-RPC を直接書いて、Go で MCP サーバーを作ってみます。ツールはメモを読む `read_note` と、書く `write_note` の2つだけです。
 
+先に、前提を2つ置いておきます。
+
+- 公開する必要がある：claude.ai は、手元の PC ではなく Anthropic のサーバーから繋いできます。なので、`localhost` で動かしているだけでは届かず、インターネットに公開する必要があります
+- OAuth は使わない：前回見た認可の流れは、今回はまったく使いません。カスタムコネクターも「サインインなし」で登録します
+
+つまり今回作るのは、「誰でも叩ける場所に置かれた、認可のない MCP サーバー」です。これがどういうことかは最後に考えるとして、まずは動くところまで持っていきます。
+
 ## MCP サーバーに最低限要るもの
 
 仕様：[MCP 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28)
@@ -113,7 +120,7 @@ curl http://127.0.0.1:8080/mcp \
 <p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="720"></p>
 <p align="center"><sub>図1：claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー</sub></p>
 
-claude.ai は Anthropic のサーバーから繋いでくるので、手元の `localhost` には届きません。なので、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。まだ認可がないので、前に nginx を置いて、claude.ai が繋ぎに来る IP の範囲（[Anthropic が公開しています](https://platform.claude.com/docs/en/api/ip-addresses)）だけを通しています。試し終わったら、トンネルは閉じておきましょう。
+最初に書いたとおり、claude.ai から繋ぐには公開する必要があります。なので、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。ただ、OAuth を使っていないので、URL を知っていれば誰でも書き込めてしまいます。そこで、前に nginx を置いて、claude.ai が繋ぎに来る IP の範囲（[Anthropic が公開しています](https://platform.claude.com/docs/en/api/ip-addresses)）だけを通しています。試し終わったら、トンネルは閉じておきましょう。
 
 カスタムコネクターに、トンネルの URL を「サインインなし」で登録してみました。そのときサーバーに届いたリクエストがこちらです。
 
@@ -176,6 +183,6 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 
 ## 次回
 
-今回は claude.ai の IP だけに絞りました。でも、claude.ai を使う人なら誰でも、URL さえ知っていればこのサーバーに入れます。そして入ってきた人は、サーバーから見ると全員 `anonymous` です。
+今回のサーバーは、公開されていて、OAuth を使っていません。claude.ai の IP だけに絞ったとはいえ、claude.ai を使う人なら誰でも、URL さえ知っていればこのサーバーに入れます。そして入ってきた人は、サーバーから見ると全員 `anonymous` です。
 
 次回は、認可なしで公開するとどうなるのかを、実際に見てみます。
