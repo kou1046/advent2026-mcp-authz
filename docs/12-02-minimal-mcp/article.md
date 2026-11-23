@@ -1,8 +1,7 @@
 ---
-title: SDK なしで MCP サーバーを書いてみたら、initialize がなくなっていた
+title: SDK なしで、claude.ai に登録できる最小の MCP サーバーを作る
 tags: MCP JSON-RPC Go Claude
 ---
-<!-- TODO: タイトルは仮 -->
 
 ## 今日の問い
 
