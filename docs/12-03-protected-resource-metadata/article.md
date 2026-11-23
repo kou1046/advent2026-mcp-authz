@@ -67,7 +67,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 前回の MCP サーバーに、2つ足します。
 
 - MCP の URL へのリクエストには、401 と `WWW-Authenticate` を返す
-- `/.well-known/oauth-protected-resource` で、メタデータを返す。`authorization_servers` には、同じホストを書く
+- `/.well-known/oauth-protected-resource` で、メタデータを返す。`authorization_servers` には、別のホストで動かす認可サーバーの URL を書く
 
 「トークン」は、`Authorization: Bearer …` ヘッダーで送られてくるものです。ただ、トークンの検証はまだしないので、付いていてもいなくても 401 にします。違うのは `WWW-Authenticate` の中身だけです。
 
@@ -81,29 +81,31 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 認可サーバーの役は、偽物に任せます。届いたリクエストをログに出しながら、メタデータを返し、登録（`/register`）を受け付け、ログイン画面の入口（`/authorize`）では「ここまで来ました」とだけ表示するサーバーです。
 
-<p align="center"><img src="images/build.drawio.svg" alt="作成する MCP サーバーと偽の認可サーバー" width="800"></p>
+<p align="center"><img src="images/build-hosts.drawio.svg" alt="作成する MCP サーバーと偽の認可サーバー" width="800"></p>
 <p align="center"><sub>図2：作成するもの。MCP サーバーは 401 とメタデータだけを返し、その先は偽の認可サーバーが受ける</sub></p>
 
 ### 公開する
 
-前回と同じく、cloudflared のトンネルと nginx の後ろに置きます。今回は、nginx でパスごとに振り分けます。
+前回と同じく、cloudflared のトンネルと nginx の後ろに置きます。今回は、MCP サーバーと偽の認可サーバーを、別々のトンネル（＝別々のホスト）で公開します。
 
-| パス | 行き先 |
+| ホスト | 行き先 |
 |---|---|
-| `/mcp`、`/.well-known/oauth-protected-resource…` | MCP サーバー |
-| それ以外（認可サーバーのメタデータ、`/register`、`/authorize` など） | 偽の認可サーバー |
+| `https://aaa.trycloudflare.com` | MCP サーバー（`/mcp` とメタデータ） |
+| `https://bbb.trycloudflare.com` | 偽の認可サーバー（メタデータ、`/register`、`/authorize` など） |
 
-1つだけ、前回と違うところがあります。`/authorize` を開くのは claude.ai ではなく、利用者のブラウザです。なので、`/authorize` だけは IP の制限を外しています。中身は「ここまで来ました」の文字だけです。
+ホストを分けたのは、claude.ai がメタデータの `authorization_servers` を本当にたどっているのかを確かめるためです。同じホストに置くと、「同じホストだろう」と当て推量で来ても区別がつきません。実際、古い MCP の仕様（2025-03-26）には、メタデータがなければ MCP サーバーと同じホストを認可サーバーとみなす、という決まりがありました。それに、ふつうは MCP サーバーと認可サーバーは別のホストにいます。
 
-<p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーと偽の認可サーバーまでの構成" width="800"></p>
-<p align="center"><sub>図3：nginx がパスで振り分ける。/mcp とメタデータは MCP サーバーへ、それ以外は偽の認可サーバーへ</sub></p>
+もう1つ、前回と違うところがあります。`/authorize` を開くのは claude.ai ではなく、利用者のブラウザです。なので、`/authorize` だけは IP の制限を外しています。中身は「ここまで来ました」の文字だけです。
+
+<p align="center"><img src="images/architecture-hosts.drawio.svg" alt="claude.ai から MCP サーバーと偽の認可サーバーまでの構成" width="800"></p>
+<p align="center"><sub>図3：MCP サーバーと偽の認可サーバーを、別々のトンネルで公開する</sub></p>
 
 ### 実際に作ったもの
 
 - https://github.com/kou1046/advent2026-mcp-authz/tree/main/days/12-03-protected-resource-metadata
 
 ```sh
-make tunnel             # MCP サーバー・偽の認可サーバー・nginx・cloudflared を立ち上げる
+make tunnel             # MCP サーバー・偽の認可サーバー・nginx・cloudflared（2本）を立ち上げる
 make tunnel CIMD=false  # 偽の認可サーバーが CIMD を広告しないようにする（DCR=false も同じ）
 make logs
 make down
