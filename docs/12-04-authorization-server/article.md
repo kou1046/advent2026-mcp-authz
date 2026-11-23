@@ -290,7 +290,7 @@ DCR は、連携のたびに登録し直すようです。設定の画面の「�
 ## まとめ
 
 - claude.ai は、Keycloak の案内板（RFC 8414）を一発で見つけ、DCR で自分を登録して、ブラウザを Keycloak のログイン画面まで連れて行った
-- 仮の認可サーバーを Keycloak に差し替えるのに、MCP サーバーのコードは変えなくてよかった。手間がかかったのは、Keycloak の匿名の登録のポリシー（Trusted Hosts、Allowed Client Scopes）
+- 標準のおかげで、仮の認可サーバーを Keycloak に差し替えるのに、MCP サーバーのコードは変えなくてよかった。ただ、製品ごとの設定のクセ（Keycloak の anonymous の DCR 登録のポリシー：Trusted Hosts、Allowed Client Scopes）には合わせる必要があった
 - claude.ai は、認可サーバーの案内板に合わせて、頼むスコープも、登録するクライアントの種類も変えてきた（おせっかい）
 
 ## 次回
