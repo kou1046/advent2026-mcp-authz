@@ -1,0 +1,23 @@
+mcp-1    | {"time":"2026-11-23T05:49:31.467787793Z","level":"INFO","msg":"listening","addr":":8080","path":"/mcp","break":"no-initialize"}
+mcp-1    | {"time":"2026-11-23T05:50:28.076429561Z","level":"INFO","msg":"request","client_ip":"160.79.106.184","method":"POST","path":"/mcp","origin":"","user_agent":"python-httpx/0.28.1","protocol_version":"2025-11-25","era":"legacy","rpc_method":"initialize","rpc_id":"1","tool":"","status":200,"duration_ms":0}
+mcp-1    | {"time":"2026-11-23T05:50:37.188829359Z","level":"INFO","msg":"request","client_ip":"160.79.106.178","method":"POST","path":"/mcp","origin":"","user_agent":"python-httpx/0.28.1","protocol_version":"2025-11-25","era":"legacy","rpc_method":"initialize","rpc_id":"1","tool":"","status":200,"duration_ms":0}
+nginx-1  | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+nginx-1  | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+nginx-1  | 10-listen-on-ipv6-by-default.sh: info: can not modify /etc/nginx/conf.d/default.conf (read-only file system?)
+nginx-1  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+nginx-1  | /docker-entrypoint.sh: Configuration complete; ready for start up
+nginx-1  | 2026/11/23 05:49:31 [notice] 1#1: using the "epoll" event method
+nginx-1  | 2026/11/23 05:49:31 [notice] 1#1: nginx/1.30.7
+nginx-1  | 2026/11/23 05:49:31 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+nginx-1  | 2026/11/23 05:49:31 [notice] 1#1: OS: Linux 6.8.0-100-generic
+nginx-1  | 2026/11/23 05:49:31 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1024:524288
+nginx-1  | 2026/11/23 05:49:31 [notice] 1#1: start worker processes
+nginx-1  | 2026/11/23 05:49:31 [notice] 1#1: start worker process 21
+nginx-1  | 2026/11/23 05:49:31 [notice] 1#1: start worker process 22
+nginx-1  | 2026/11/23 05:49:43 [error] 21#21: *1 access forbidden by rule, client: 240f:143:9a05:1:79da:fa84:c91d:bd08, server: , request: "POST /mcp HTTP/1.1", host: "burke-legends-sitting-dropped.trycloudflare.com"
+nginx-1  | 240f:143:9a05:1:79da:fa84:c91d:bd08 - - [23/Nov/2026:05:49:43 +0000] "POST /mcp HTTP/1.1" 403 153 "-" "curl/8.7.1" "240f:143:9a05:1:79da:fa84:c91d:bd08"
+nginx-1  | 160.79.106.184 - - [23/Nov/2026:05:50:28 +0000] "POST /mcp HTTP/1.1" 200 90 "-" "python-httpx/0.28.1" "160.79.106.184"
+nginx-1  | 160.79.106.178 - - [23/Nov/2026:05:50:37 +0000] "POST /mcp HTTP/1.1" 200 90 "-" "python-httpx/0.28.1" "160.79.106.178"
