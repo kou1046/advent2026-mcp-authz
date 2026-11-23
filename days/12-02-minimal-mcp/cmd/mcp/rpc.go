@@ -116,7 +116,7 @@ func (s *server) handleModern(r *http.Request, req *request) (map[string]any, *r
 	var rerr *rpcError
 	switch req.Method {
 	case "server/discover":
-		if s.brk == "no-initialize" {
+		if s.brk == "no-discover" {
 			return nil, &rpcError{status: http.StatusNotFound, Code: codeMethodNotFound, Message: "Method not found: " + req.Method}
 		}
 		result = map[string]any{

@@ -24,7 +24,8 @@ make smoke    # curl で一通り叩く
 記事の「壊してみる」で使うモードは、`BREAK` で切り替えます。
 
 ```sh
-make down && make tunnel BREAK=no-initialize   # initialize / server/discover に「そんなメソッドはない」と返す
+make down && make tunnel BREAK=no-initialize   # 古い版の initialize だけに「そんなメソッドはない」と返す
+make down && make tunnel BREAK=no-discover     # 新しい版の server/discover だけに「そんなメソッドはない」と返す
 make down && make tunnel BREAK=bad-version     # 対応する版として、存在しない版を返す
 make down && make tunnel BREAK=bad-schema      # ツールの inputSchema を null にする
 ```

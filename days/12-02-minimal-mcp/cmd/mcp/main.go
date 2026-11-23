@@ -4,7 +4,8 @@
 // MCP 仕様 2026-07-28（initialize なし、毎回 _meta でバージョンを送る）を主にしつつ、
 // initialize から始める 2025-11-25 以前のクライアントにも応える。
 //
-//	-break=no-initialize  initialize / server/discover に「そんなメソッドはない」と返す
+//	-break=no-initialize  古い版の initialize だけに「そんなメソッドはない」と返す
+//	-break=no-discover    新しい版の server/discover だけに「そんなメソッドはない」と返す
 //	-break=bad-version    サーバーが対応する版として、存在しない版を返す
 //	-break=bad-schema     ツールの inputSchema を null にする
 package main
@@ -37,11 +38,11 @@ func main() {
 	addr := flag.String("addr", "127.0.0.1:8080", "listen address")
 	path := flag.String("path", "/mcp", "path of the MCP endpoint")
 	origins := flag.String("allowed-origins", "", "comma separated Origin values to accept (requests without Origin are always accepted)")
-	brk := flag.String("break", "", "break mode: no-initialize, bad-version or bad-schema")
+	brk := flag.String("break", "", "break mode: no-initialize, no-discover, bad-version or bad-schema")
 	flag.Parse()
 
 	switch *brk {
-	case "", "no-initialize", "bad-version", "bad-schema":
+	case "", "no-initialize", "no-discover", "bad-version", "bad-schema":
 	default:
 		fmt.Fprintf(os.Stderr, "unknown break mode: %s\n", *brk)
 		os.Exit(2)
