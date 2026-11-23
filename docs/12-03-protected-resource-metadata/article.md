@@ -95,7 +95,8 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 1つだけ、前回と違うところがあります。`/authorize` を開くのは claude.ai ではなく、利用者のブラウザです。なので、`/authorize` だけは IP の制限を外しています。中身は「ここまで来ました」の文字だけです。
 
-<!-- TODO: 図3。構成図（Day 2 の図5 に偽の認可サーバーを足す） -->
+<p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーと偽の認可サーバーまでの構成" width="800"></p>
+<p align="center"><sub>図3：nginx がパスで振り分ける。/mcp とメタデータは MCP サーバーへ、それ以外は偽の認可サーバーへ</sub></p>
 
 ### 実際に作ったもの
 
