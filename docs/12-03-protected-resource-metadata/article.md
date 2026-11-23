@@ -84,6 +84,16 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 `initialize` でも `server/discover` でも `tools/call` でも、メソッドを問わず同じです。通知（`notifications/…`）も 401 になります。
 
+メタデータは、次のものを返します。
+
+```json
+{
+  "resource": "https://aaa.trycloudflare.com/mcp",
+  "authorization_servers": ["https://bbb.trycloudflare.com"],
+  "bearer_methods_supported": ["header"]
+}
+```
+
 #### 認可サーバー（新規、仮）
 
 本物の認可サーバーは次回立てるので、今回は、届いたリクエストをログに出しながら、それらしい返事をするだけの、仮のものを置きます。ログイン画面はありません。
@@ -95,6 +105,22 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 | `/authorize`（GET） | 200、「ここまで来ました」とだけ表示する |
 
 `client_id` は確かめないので、どの登録の方式で来ても `/authorize` までは進めます。DCR と CIMD は、メタデータに書くかどうかを起動時に切り替えられるようにします。
+
+メタデータは、次のものを返します。`registration_endpoint` が DCR、`client_id_metadata_document_supported` が CIMD の広告です。
+
+```json
+{
+  "issuer": "https://bbb.trycloudflare.com",
+  "authorization_endpoint": "https://bbb.trycloudflare.com/authorize",
+  "token_endpoint": "https://bbb.trycloudflare.com/token",
+  "registration_endpoint": "https://bbb.trycloudflare.com/register",
+  "client_id_metadata_document_supported": true,
+  "response_types_supported": ["code"],
+  "grant_types_supported": ["authorization_code", "refresh_token"],
+  "code_challenge_methods_supported": ["S256"],
+  "token_endpoint_auth_methods_supported": ["none"]
+}
+```
 
 ### 公開する
 
