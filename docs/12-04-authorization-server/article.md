@@ -43,8 +43,8 @@ Keycloak には、[MCP との連携ガイド](https://www.keycloak.org/securing-
 
 Keycloak には、独自の言葉がいくつかあります。今回出てくるのは、次の4つです。
 
-<p align="center"><img src="images/keycloak-terms-v2.drawio.svg" alt="Keycloak の realm、クライアント、ユーザー、クライアント登録ポリシー" width="800"></p>
-<p align="center"><sub>図2：Keycloak の中は realm ごとに区切られている。claude.ai は、realm「mcp」のクライアント登録ポリシーを通って、クライアントとして登録される。戻り先が claude.ai ではない ChatGPT は、今の設定だと弾かれる</sub></p>
+<p align="center"><img src="images/keycloak-terms-v3.drawio.svg" alt="Keycloak の realm、クライアント、ユーザー、クライアント登録ポリシー" width="800"></p>
+<p align="center"><sub>図2：Keycloak の中は realm ごとに区切られている。claude.ai は、realm のクライアント登録ポリシーを通って、クライアントとして登録される。戻り先が claude.ai ではない ChatGPT は、今の設定だと弾かれる</sub></p>
 
 | 用語 | 何か |
 |---|---|
