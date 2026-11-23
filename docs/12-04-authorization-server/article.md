@@ -171,10 +171,8 @@ claude.ai は、登録のときに `openid` というスコープを頼んでい
 
 Keycloak は、自分のメタデータで「対応している」と言っているスコープを、認証なしの登録では頼ませない、という既定だったわけです。そこで、登録で頼んでよいスコープを、メタデータの `scopes_supported` そのものにしました。
 
-| 匿名の登録のポリシー | 既定 | 今回 |
-|---|---|---|
-| Trusted Hosts | 送り元のホストを確かめる、信頼するホストなし | 送り元は確かめず、`redirect_uris` は `claude.ai` だけ |
-| Allowed Client Scopes | realm の既定のスコープだけ | メタデータの `scopes_supported` と同じ |
+<p align="center"><img src="images/registration-gates.drawio.svg" alt="claude.ai の登録が、Trusted Hosts と Allowed Client Scopes の2つの関門を通ってクライアントになる" width="800"></p>
+<p align="center"><sub>図6：claude.ai の登録は、Keycloak の2つの関門を通ってやっとクライアントになる。どちらも既定のままだと弾かれる</sub></p>
 
 これで、やっと登録が通りました。
 
@@ -196,7 +194,7 @@ Keycloak は、自分のメタデータで「対応している」と言って�
 ブラウザは、Keycloak のログイン画面にたどり着きました。
 
 <p align="center"><img src="images/login-page.png" alt="Keycloak のログイン画面。MCP、Sign in to your account" width="600"></p>
-<p align="center"><sub>図6：Keycloak のログイン画面。上の「MCP」は realm の名前</sub></p>
+<p align="center"><sub>図7：Keycloak のログイン画面。上の「MCP」は realm の名前</sub></p>
 
 アドレスバーの URL には、前回の仮の認可サーバーのときにはなかったものが2つ付いていました。
 
@@ -215,14 +213,14 @@ Keycloak の管理画面で、realm「mcp」のクライアント一覧を見る
 もう1つ気になったのが、クライアントの種類です。
 
 <p align="center"><img src="images/client-credentials.png" alt="Credentials タブ。Client Authenticator は Client Id and Secret" width="600"></p>
-<p align="center"><sub>図7：登録された claude.ai は、シークレットを持つクライアントになっていた</sub></p>
+<p align="center"><sub>図8：登録された claude.ai は、シークレットを持つクライアントになっていた</sub></p>
 
 前回の仮の認可サーバーには、claude.ai は `token_endpoint_auth_method: none`（シークレットなし）で登録してきました。今回は「Client Id and Secret」、つまりシークレットありです。Keycloak のメタデータの `token_endpoint_auth_methods_supported` には、`none` がありません。手元で試すと、Keycloak は `none` での登録ならシークレットなしで登録してくれます。なので、claude.ai のほうが、Keycloak に合わせてシークレットありで登録してきたことになります。
 
 ついでに、claude.ai からもう一度「連携」を押してみると、「Claude」がもう1つ増えました。
 
 <p align="center"><img src="images/clients-two.png" alt="クライアント一覧に Claude が2つ" width="430"></p>
-<p align="center"><sub>図8：連携し直すと、別の Client ID で「Claude」がもう1つ登録された</sub></p>
+<p align="center"><sub>図9：連携し直すと、別の Client ID で「Claude」がもう1つ登録された</sub></p>
 
 DCR は、連携のたびに登録し直すようです。設定の画面の「アクセスの多いサーバーでは多数のクライアント登録が作成されます」は、このことですね。
 
