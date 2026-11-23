@@ -1,0 +1,53 @@
+# 手元で MCP サーバーを試す構成。MCP サーバーと仮の認可サーバーを、別々のトンネル（＝別々のホスト）で公開する。
+#   claude.ai → Cloudflare ┬ cloudflared-mcp → nginx:80（IP で絞る） → mcp（401 と RFC 9728 のメタデータ）
+#                          └ cloudflared-as  → nginx:81（/authorize だけ誰でも） → authserver（仮の認可サーバー）
+# 手元からは mcp を 127.0.0.1:8080 で直接叩ける（nginx の 8081 と 8082 は、claude.ai の範囲以外 403）。
+name: advent-mcp
+
+services:
+  mcp:
+    build:
+      context: ../..
+      dockerfile: deploy/local/mcp.Dockerfile
+    image: advent-mcp-12-03
+    # メタデータに書く認可サーバーの URL。make tunnel が、認可サーバーのトンネルの URL を渡す。
+    command: ["-addr", ":8080", "-authorization-server", "${AUTH_SERVER:-http://127.0.0.1:8082}", "-break", "${BREAK:-}"]
+    ports: ["127.0.0.1:8080:8080"]
+    networks: [local]
+
+  # 仮の認可サーバー。登録・認可の入口を広告して、届いたリクエストをログに出すだけ。
+  # DCR=false や CIMD=false で、広告する登録方式を切り替える。
+  authserver:
+    image: advent-mcp-12-03
+    entrypoint: ["/authserver"]
+    command: ["-addr", ":8080", "-dcr=${DCR:-true}", "-cimd=${CIMD:-true}"]
+    networks: [local]
+
+  nginx:
+    image: nginx:1.30.7-alpine
+    volumes: ["./nginx.conf:/etc/nginx/conf.d/default.conf:ro"]
+    ports: ["127.0.0.1:8081:80", "127.0.0.1:8082:81"]
+    depends_on: [mcp, authserver]
+    networks: [local]
+
+  cloudflared-mcp:
+    image: cloudflare/cloudflared:${CLOUDFLARED_VERSION:-2025.11.1}
+    command: ["tunnel", "--no-autoupdate", "--url", "http://nginx:80"]
+    profiles: [tunnel]
+    depends_on: [nginx]
+    networks:
+      # nginx が CF-Connecting-IP を信じる相手を、この IP に固定する。
+      local: { ipv4_address: 172.28.0.10 }
+
+  cloudflared-as:
+    image: cloudflare/cloudflared:${CLOUDFLARED_VERSION:-2025.11.1}
+    command: ["tunnel", "--no-autoupdate", "--url", "http://nginx:81"]
+    profiles: [tunnel]
+    depends_on: [nginx]
+    networks:
+      local: { ipv4_address: 172.28.0.11 }
+
+networks:
+  local:
+    ipam:
+      config: [{ subnet: 172.28.0.0/24 }]
