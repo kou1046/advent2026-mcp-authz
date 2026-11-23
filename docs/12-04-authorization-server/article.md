@@ -173,8 +173,8 @@ Keycloak は、anonymous の登録に、最初から「クライアント登録�
 
 Trusted Hosts は、「誰から来たか」と「どこへ戻すか」を確かめます。
 
-<p align="center"><img src="images/trusted-hosts.drawio.svg" alt="Trusted Hosts は送り元を確かめず、戻り先が claude.ai かを確かめる" width="800"></p>
-<p align="center"><sub>図7：Keycloak から見える送り元は nginx なので、送り元は確かめない。そのかわり、戻り先が claude.ai でなければ弾く</sub></p>
+<p align="center"><img src="images/trusted-hosts-v2.drawio.svg" alt="Trusted Hosts は送り元を確かめず、戻り先が claude.ai かを確かめる" width="800"></p>
+<p align="center"><sub>図7：Anthropic の送り元の IP は逆引きできないので、Keycloak では送り元を確かめず、nginx の IP 制限に任せる。そのかわり、戻り先が claude.ai でなければ弾く</sub></p>
 
 | 確かめること | default | 変更後 |
 |---|---|---|
@@ -184,7 +184,11 @@ Trusted Hosts は、「誰から来たか」と「どこへ戻すか」を確か
 
 default では一覧が空っぽなので、誰から来ても弾かれます。手元で試したとき、最初に `Host not trusted`（403）で止められたのは、これです。
 
-送ってきた相手を確かめないことにしたのは、確かめようがないからです。claude.ai の登録は、毎回違う Anthropic の IP から来ます。しかも Cloudflare、cloudflared、nginx を経由するので、Keycloak から見える接続元は nginx になってしまいます。送り元は、nginx の IP 制限で絞っています。
+送ってきた相手を確かめないことにしたのは、確かめようがないからです。Keycloak は、送ってきた相手の IP を逆引きして、その名前が信頼するホストに入っているかで確かめます（[Keycloak のドキュメント](https://www.keycloak.org/securing-apps/client-registration)）。IP の範囲（CIDR）で書く方法は、ドキュメントには見当たりません。
+
+ところが、Anthropic が公開しているのは、送り元の IP の範囲（[`160.79.104.0/21` など](https://platform.claude.com/docs/en/api/ip-addresses)）だけです。実際に届いた登録の送り元の IP（`160.79.106.x`）を逆引きしてみても、名前は返ってきませんでした。名前がないので、信頼するホストに何を書いても一致しません。
+
+なので、送り元は、範囲で書ける nginx の IP 制限に任せました。Keycloak に届く登録は、すでに Anthropic の範囲から来たものだけです。
 
 そのかわり、戻り先は `claude.ai` だけにしました。手元で、戻り先をよそのドメインにして登録してみると、ちゃんと 403 で弾かれました。「誰からの登録でも受け付けるが、戻り先は claude.ai だけ」という形です。
 
