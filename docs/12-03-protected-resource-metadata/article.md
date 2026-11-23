@@ -177,14 +177,14 @@ make down
 
 URL を入れると、claude.ai はサーバーを3段階で確かめて、「サーバーが見つかりました」と表示しました。
 
-<p align="center"><img src="images/connector-found.png" alt="カスタムコネクタを追加のダイアログ。サーバーを3段階で確認して、サーバーが見つかりました" width="400"></p>
+<p align="center"><img src="images/connector-found.drawio.png" alt="カスタムコネクタを追加のダイアログ。サーバーを3段階で確認して、サーバーが見つかりました" width="400"></p>
 <p align="center"><sub>図4：サーバーに接続（401）、サインイン設定を確認（200）、サインインプロバイダーを確認（200）の3段階で、サーバーが見つかる</sub></p>
 
 1段目は 401 なのに、「完了」になっています。claude.ai にとって、この 401 は失敗ではなく、「サインインが要る」という合図だからです。
 
 設定の画面では、「認証」は「今すぐサインイン」に、「OAuth クライアント」は「Claude の公開アイデンティティを使用」（CIMD）に、「検出済み」と付いていました。
 
-<p align="center"><img src="images/settings-cimd.png" alt="設定の画面。今すぐサインインと、Claude の公開アイデンティティを使用に、検出済みが付いている" width="400"></p>
+<p align="center"><img src="images/settings-cimd.drawio.png" alt="設定の画面。今すぐサインインと、Claude の公開アイデンティティを使用に、検出済みが付いている" width="400"></p>
 <p align="center"><sub>図5：「今すぐサインイン」と「Claude の公開アイデンティティを使用」（CIMD）に「検出済み」が付く（画面は、後で試す「自動的に登録」を選んだところ）</sub></p>
 
 「続ける」を押すと、ブラウザが仮の認可サーバーの `/authorize` に移って、「到達しました」と表示されました。
