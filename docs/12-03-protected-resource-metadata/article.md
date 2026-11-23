@@ -64,7 +64,9 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 ### 作るもの
 
-前回の MCP サーバーに、2つ足します。
+前回の MCP サーバーに手を入れるのに加えて、今回は認可サーバーを新しく足します。ただし、認可サーバーは偽物です。
+
+#### MCP サーバー（前回のものに追加）
 
 - MCP の URL へのリクエストには、401 と `WWW-Authenticate` を返す
 - `/.well-known/oauth-protected-resource` で、メタデータを返す。`authorization_servers` には、別のホストで動かす認可サーバーの URL を書く
@@ -79,7 +81,17 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 `initialize` でも `server/discover` でも `tools/call` でも、メソッドを問わず同じです。通知（`notifications/…`）も 401 になります。
 
-認可サーバーの役は、偽物に任せます。届いたリクエストをログに出しながら、メタデータを返し、登録（`/register`）を受け付け、ログイン画面の入口（`/authorize`）では「ここまで来ました」とだけ表示するサーバーです。
+#### 認可サーバー（新規、偽物）
+
+本物の認可サーバーは次回立てるので、今回は、届いたリクエストをログに出しながら、それらしい返事をするだけの偽物を置きます。ログイン画面はありません。
+
+| リクエスト | 返すもの |
+|---|---|
+| `/.well-known/oauth-authorization-server`（GET） | 200、認可サーバーのメタデータ。`/authorize` の場所や、対応している登録の方式（DCR、CIMD）を書く |
+| `/register`（POST） | 201、送られてきた内容に `client_id` を付けて返す（DCR）。何も保存しない |
+| `/authorize`（GET） | 200、「ここまで来ました」とだけ表示する |
+
+`client_id` は確かめないので、どの登録の方式で来ても `/authorize` までは進めます。DCR と CIMD は、メタデータに書くかどうかを起動時に切り替えられるようにします。
 
 <p align="center"><img src="images/build-hosts-v3.drawio.svg" alt="作成する MCP サーバーと偽の認可サーバー" width="800"></p>
 <p align="center"><sub>図2：作成するもの。MCP サーバーは 401 とメタデータだけを返し、その先は偽の認可サーバーが受ける</sub></p>
