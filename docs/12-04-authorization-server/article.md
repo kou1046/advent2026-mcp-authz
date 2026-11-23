@@ -151,7 +151,7 @@ Requested scope 'openid' not trusted
 
 事前に緩めておいたのとは、別の関門に止められていたのです。
 
-### Keycloak の、トークンなしの登録の関門
+### Keycloak の、DCR 登録の関門
 
 DCR の仕様（RFC 7591）は、登録の窓口を2通りで運用してよいとしています。
 
