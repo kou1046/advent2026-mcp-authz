@@ -32,7 +32,7 @@ claude.ai が探しに来た認可サーバーは、何を返せばいいので�
 | `code_challenge_methods_supported` | PKCE の方式。`S256` が要る |
 | `registration_endpoint`、`client_id_metadata_document_supported` | DCR、CIMD に対応しているか |
 
-<!-- TODO: MCP の仕様で、メタデータに必須のもの（code_challenge_methods_supported がないとクライアントは断る、など）を確かめて1〜2行 -->
+逆に言えば、認可サーバーがこの案内板さえ返していれば、claude.ai はそこから先の窓口を自分で見つけてくれます。窓口の場所（パス）は、製品ごとに違っていても構いません。
 
 ### Keycloak とは
 
