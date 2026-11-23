@@ -105,7 +105,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 ログイン画面は、ユーザー本人が見て操作するものです。なので claude.ai は、`/authorize` だけは自分で取りに行かず、ユーザーのブラウザをそこへ送り出します。前回と同じく claude.ai の IP だけを通していると、ユーザーのブラウザが門前払いされてしまうので、`/authorize` だけは制限を外しています。今回の中身は「ここまで来ました」の文字だけです。
 
-<p align="center"><img src="images/architecture-v2.drawio.svg" alt="claude.ai から MCP サーバーと偽の認可サーバーまでの構成" width="800"></p>
+<p align="center"><img src="images/architecture-v3.drawio.svg" alt="claude.ai から MCP サーバーと偽の認可サーバーまでの構成" width="800"></p>
 <p align="center"><sub>図3：MCP サーバーと偽の認可サーバーを、別々のトンネルで公開する。青い線は認可サーバーへの経路で、/authorize だけはユーザーのブラウザから直接来る</sub></p>
 
 ### 実際に作ったもの
