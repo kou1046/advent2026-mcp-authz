@@ -216,7 +216,7 @@ URL を入れると、claude.ai はサーバーを3段階で確かめて、「�
 <p align="center"><img src="images/authorize-flow-v3.drawio.svg" alt="claude.ai が /authorize の URL を渡し、ブラウザが JavaScript で認可サーバーへ移動する" width="800"></p>
 <p align="center"><sub>図6：claude.ai は /authorize の URL だけを画面に渡し、code_verifier は自分で持っておく。ブラウザは、その URL へ移動する</sub></p>
 
-ブラウザの開発者ツールで「追加」を押したときの通信を見ると、claude.ai の画面は、まず claude.ai のサーバーに fetch していました。返ってきたのは、こんな JSON です（値は一部省略）。
+ブラウザの開発者ツールで「追加」を押したときの通信を見ると、claude.ai の画面は、まず claude.ai のサーバーに、OAuth 認可の準備を頼んでいました（fetch）。返ってきたのは、こんな JSON です（値は一部省略）。
 
 ```json
 {
