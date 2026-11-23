@@ -236,7 +236,7 @@ claude.ai は、まず `server/discover` で新しい版を試して、だめな
 
 ### Claude のドキュメントも見てみた
 
-念のため、Claude のコネクターのドキュメント（[Building connectors](https://claude.com/docs/connectors/building) まわり）も見てみました。2026-11-23 時点では、載っている MCP の版は 2025-11-25 までで、2026-07-28 も `server/discover` も出てきません。`initialize` のことは書いてあります。
+念のため、Claude のコネクターのドキュメント（[Building connectors](https://claude.com/docs/connectors/building) まわり）も見てみました。2026-11-23 時点では、MCP の版は認可の仕様として 2025-11-25 までが挙がっているだけで、2026-07-28 も `server/discover` も出てきません。`initialize` のことは書いてあります。
 
 最新の版に沿ってここまで書いてきましたが、今の claude.ai の本命は、まだ古い版の `initialize` でした。てへ。
 
