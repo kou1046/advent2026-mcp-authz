@@ -263,21 +263,6 @@ PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、
 
 <!-- 画像：CIMD=false のときの設定の画面（自動的に登録 検出済み） -->
 
-DCR のときは、3 の認可サーバーのメタデータの後に `/register` が来て、その返事の `client_id` で `/authorize` に進みました。登録はダイアログの確認のときではなく、「追加」を押して認可を始めるときに来ます。届いた中身は、こうです。
-
-```json
-{
-  "redirect_uris": ["https://claude.ai/api/mcp/auth_callback"],
-  "token_endpoint_auth_method": "none",
-  "grant_types": ["authorization_code", "refresh_token"],
-  "response_types": ["code"],
-  "client_name": "Claude",
-  "application_type": "web"
-}
-```
-
-`token_endpoint_auth_method` が `none` なので、claude.ai は `client_secret` を持たないクライアントとして登録しています。その代わりに、PKCE で守るという形です。
-
 ## 感想
 
 CIMD と DCR のどちらにするかを claude.ai が認可サーバーを見て決めてくれるなら、画面で選ばせなくてもいいのでは、と思いました。選んでも効かない選択肢は、むしろ迷わせます。意味があるのは、「独自の OAuth クライアント」を使うかどうかだけでした。
