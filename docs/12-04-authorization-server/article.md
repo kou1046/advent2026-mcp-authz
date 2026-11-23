@@ -164,8 +164,8 @@ claude.ai は、初対面の認可サーバーからトークンをもらって�
 
 Keycloak は、anonymous の登録に、最初から「クライアント登録ポリシー」をいくつも付けています。登録のリクエストが来ると、それを順に確かめて、1つでも引っかかればそこで止めます。今回関わったのは、そのうちの2つです。
 
-<p align="center"><img src="images/registration-gates-v2.drawio.svg" alt="claude.ai の登録が、Trusted Hosts と Allowed Client Scopes の2つの関門を通ってクライアントになる" width="800"></p>
-<p align="center"><sub>図6：claude.ai の登録は、Keycloak の2つの関門を通ってやっとクライアントになる。どちらも既定のままだと弾かれる</sub></p>
+<p align="center"><img src="images/registration-gates-v3.drawio.svg" alt="claude.ai の登録が、Trusted Hosts と Allowed Client Scopes の2つの関門を通ってクライアントになる" width="800"></p>
+<p align="center"><sub>図6：claude.ai の登録は、Keycloak の2つの関門を通ってやっとクライアントになる。どちらも default のままだと弾かれる</sub></p>
 
 ほかにも、「登録されたクライアントは同意画面が必須」「登録できるのは 200 件まで」といったポリシーが付いていますが、今回は止められなかったので、そのままにしています。
 
@@ -176,13 +176,13 @@ Trusted Hosts は、「誰から来たか」と「どこへ戻すか」を確か
 <p align="center"><img src="images/trusted-hosts.drawio.svg" alt="Trusted Hosts は送り元を確かめず、戻り先が claude.ai かを確かめる" width="800"></p>
 <p align="center"><sub>図7：Keycloak から見える送り元は nginx なので、送り元は確かめない。そのかわり、戻り先が claude.ai でなければ弾く</sub></p>
 
-| 確かめること | 既定 | 今回 |
+| 確かめること | default | 今回 |
 |---|---|---|
 | 登録を送ってきた相手（接続元）が、信頼するホストの一覧にあるか | 確かめる | 確かめない |
 | 登録の中身の URI（`redirect_uris` など）が、信頼するホストの下にあるか | 確かめる | 確かめる |
 | 信頼するホストの一覧 | 空っぽ | `claude.ai` |
 
-既定では一覧が空っぽなので、誰から来ても弾かれます。手元で試したとき、最初に `Host not trusted`（403）で止められたのは、これです。
+default では一覧が空っぽなので、誰から来ても弾かれます。手元で試したとき、最初に `Host not trusted`（403）で止められたのは、これです。
 
 送ってきた相手を確かめないことにしたのは、確かめようがないからです。claude.ai の登録は、毎回違う Anthropic の IP から来ます。しかも Cloudflare、cloudflared、nginx を経由するので、Keycloak から見える接続元は nginx になってしまいます。送り元は、nginx の IP 制限で絞っています。
 
@@ -194,22 +194,22 @@ Trusted Hosts は、「誰から来たか」と「どこへ戻すか」を確か
 
 claude.ai は、登録のリクエストに `scope`（スコープ）を付けていました。スコープは、クライアントが「何をしたいか」を認可サーバーに伝える文字列です（`profile` や `email` など）。登録で頼んだスコープは、そのクライアントに割り当てられ、トークンに何を載せられるかが決まります。
 
-Allowed Client Scopes は、anonymous の登録で頼めるスコープを、realm の既定のスコープ（新しいクライアントにいつも付くものと、頼まれたら付けられるもの）に限っています。`openid` は、そこに入っていませんでした。
+Allowed Client Scopes は、anonymous の登録で頼めるスコープを、realm の Default と Optional のスコープ（新しいクライアントにいつも付くものと、頼まれたら付けられるもの）に限っています。`openid` は、そこに入っていませんでした。
 
 `openid` を許して試し直すと、今度は `service_account` で弾かれました。Keycloak は、引っかかったところで止めるので、1つずつしか教えてくれません。
 
 見比べてわかったのは、claude.ai が、Keycloak の案内板の `scopes_supported` に並んだスコープを、全部まとめて頼んでいたことです。実は claude.ai は、案内板のこんなところまで見ていました。`scopes_supported` は、案内板に載っている「うちで頼めるスコープの一覧」です。前回の仮の認可サーバーは載せていなかったので、気づきませんでした。
 
-<p align="center"><img src="images/allowed-scopes.drawio.svg" alt="claude.ai が頼んだスコープと、anonymous の登録で頼めるスコープの比較" width="800"></p>
+<p align="center"><img src="images/allowed-scopes-v2.drawio.svg" alt="claude.ai が頼んだスコープと、anonymous の登録で頼めるスコープの比較" width="800"></p>
 <p align="center"><sub>図8：claude.ai は案内板のスコープを全部頼んだが、そのうち openid と service_account は anonymous の登録では頼めなかった</sub></p>
 
-| スコープ | 案内板の `scopes_supported` | anonymous の登録で頼めるか（既定） | 頼めない理由 |
+| スコープ | 案内板の `scopes_supported` | anonymous の登録で頼めるか（default） | 頼めない理由 |
 |---|---|---|---|
 | `openid` | ある | 頼めない | Keycloak のクライアントスコープの一覧に、そもそもない |
 | `service_account` | ある | 頼めない | サービスアカウント専用で、新しいクライアントには付かないスコープ |
 | ほかの11個 | ある | 頼める | |
 
-Keycloak は、案内板では「使える」と言っているスコープを、anonymous の登録では頼ませない、という既定だったわけです。claude.ai は案内板を素直に信じて頼んだだけなので、claude.ai が悪いわけではありません。
+Keycloak は、案内板では「使える」と言っているスコープを、anonymous の登録では頼ませない、という default だったわけです。claude.ai は案内板を素直に信じて頼んだだけなので、claude.ai が悪いわけではありません。
 
 #### どう直したか
 
@@ -275,7 +275,7 @@ DCR は、連携のたびに登録し直すようです。設定の画面の「�
 
 ### 手間がかかったのは、標準の外側だった
 
-その代わり、手間がかかったのは、Keycloak の既定値に合わせるところでした。Trusted Hosts に止められ、Allowed Client Scopes に2回止められ、管理画面も外向けの URL でログインしに行ってエラーになりました。どれも、安全側に倒した既定値なので、Keycloak が悪いわけではありません。標準どおりに話していても、製品ごとの「設定のクセ」は残る、ということですね。
+その代わり、手間がかかったのは、Keycloak の default の設定に合わせるところでした。Trusted Hosts に止められ、Allowed Client Scopes に2回止められ、管理画面も外向けの URL でログインしに行ってエラーになりました。どれも、安全側に倒した既定値なので、Keycloak が悪いわけではありません。標準どおりに話していても、製品ごとの「設定のクセ」は残る、ということですね。
 
 一方で、claude.ai のおせっかいは今回も健在でした。案内板の `scopes_supported` を見てスコープを全部頼み、`none` がないのを見てシークレットありで登録してきます。相手に合わせてくれるのはありがたいのですが、何を頼んでくるかは、ログを見るまでわかりませんでした。
 
