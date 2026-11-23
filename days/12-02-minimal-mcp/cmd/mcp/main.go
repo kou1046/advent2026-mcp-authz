@@ -1,5 +1,5 @@
 // mcp は SDK を使わずに書いた、最低限の MCP サーバー（Streamable HTTP、ステートレス）。
-// ツールは read_note と write_note の2つ。認可はまだ入れていないので、誰が呼んでも owner は anonymous になる。
+// ツールは read_note と write_note の2つ。認証はまだ入れていないので、誰が呼んでも owner は anonymous になる。
 //
 // MCP 仕様 2026-07-28（initialize なし、毎回 _meta でバージョンを送る）を主にしつつ、
 // initialize から始める 2025-11-25 以前のクライアントにも応える。

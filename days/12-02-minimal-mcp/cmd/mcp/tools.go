@@ -11,7 +11,7 @@ import (
 	"github.com/kou1046/advent2026-mcp-authz/days/12-02-minimal-mcp/internal/notes"
 )
 
-// 認可がまだないので、誰が書いても同じ owner になる。
+// 認証がまだないので、誰が書いても同じ owner になる。
 const anonymous = "anonymous"
 
 // 認可なしで一般公開しているので、誰が何を書いてくるかわからない。
