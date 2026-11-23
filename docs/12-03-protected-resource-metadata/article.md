@@ -81,7 +81,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 認可サーバーの役は、偽物に任せます。届いたリクエストをログに出しながら、メタデータを返し、登録（`/register`）を受け付け、ログイン画面の入口（`/authorize`）では「ここまで来ました」とだけ表示するサーバーです。
 
-<p align="center"><img src="images/build-hosts.drawio.svg" alt="作成する MCP サーバーと偽の認可サーバー" width="800"></p>
+<p align="center"><img src="images/build-hosts-v2.drawio.svg" alt="作成する MCP サーバーと偽の認可サーバー" width="800"></p>
 <p align="center"><sub>図2：作成するもの。MCP サーバーは 401 とメタデータだけを返し、その先は偽の認可サーバーが受ける</sub></p>
 
 ### 公開する
