@@ -44,7 +44,7 @@ remote の MCP サーバーでは、これを HTTP に載せます。1つの URL
 
 #### 以前の流れ：最初に initialize する
 
-変わったのは、会話の始め方です。2025-11-25 までの MCP は、最初に `initialize` でバージョンや機能を交換してから、ツールを呼ぶ流れでした。
+以前の版と最新の版（2026-07-28）で大きく変わったのは、会話の始め方です。2025-11-25 までの MCP は、最初に `initialize` でバージョンや機能を交換してから、ツールを呼ぶ流れでした。
 
 <p align="center"><img src="images/initialize.drawio.svg" alt="以前の流れ：initialize で挨拶してから、セッション ID を付けてツールを呼ぶ" width="800"></p>
 <p align="center"><sub>図2：以前の流れ。initialize で決めたことを、サーバーがセッションとして覚えておく</sub></p>
