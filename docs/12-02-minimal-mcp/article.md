@@ -27,7 +27,7 @@ MCP のメッセージは [JSON-RPC 2.0](https://www.jsonrpc.org/specification) 
 
 - リクエスト：MCP サーバーに何かしてほしいときに送る。`id` と `method` を持ち、必ず返事が来る
 - レスポンス：リクエストへの答え。同じ `id` に、`result`（成功）か `error`（失敗）を載せて返す
-- 通知：伝えるだけで、返事のいらないときに送る。`id` がない。MCP では名前が `notifications/` で始まる
+- 通知：MCP サーバーに伝えるだけで、返事のいらないときに送る。`id` がない。MCP では名前が `notifications/` で始まる
 
 上から順に、リクエスト、レスポンス、通知の例です。
 
