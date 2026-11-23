@@ -95,7 +95,15 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 ホストを分けたのは、claude.ai がメタデータの `authorization_servers` を本当にたどっているのかを確かめるためです。同じホストに置くと、「同じホストだろう」と当て推量で来ても区別がつきません。実際、古い MCP の仕様（2025-03-26）には、メタデータがなければ MCP サーバーと同じホストを認可サーバーとみなす、という決まりがありました。それに、ふつうは MCP サーバーと認可サーバーは別のホストにいます。
 
-もう1つ、前回と違うところがあります。`/authorize` を開くのは claude.ai ではなく、利用者のブラウザです。なので、`/authorize` だけは IP の制限を外しています。中身は「ここまで来ました」の文字だけです。
+もう1つ、前回と違うところがあります。誰が繋ぎに来るかが、1か所だけ違うのです。
+
+| 行き先 | 繋ぎに来るのは | IP の制限 |
+|---|---|---|
+| MCP の URL、MCP サーバーのメタデータ | claude.ai（Anthropic のサーバー） | あり |
+| 認可サーバーのメタデータ、`/register` | claude.ai（Anthropic のサーバー） | あり |
+| `/authorize`（ログイン画面の入口） | ユーザーのブラウザ | なし |
+
+ログイン画面は、ユーザー本人が見て操作するものです。なので claude.ai は、`/authorize` だけは自分で取りに行かず、ユーザーのブラウザをそこへ送り出します。前回と同じく claude.ai の IP だけを通していると、ユーザーのブラウザが門前払いされてしまうので、`/authorize` だけは制限を外しています。今回の中身は「ここまで来ました」の文字だけです。
 
 <p align="center"><img src="images/architecture-hosts.drawio.svg" alt="claude.ai から MCP サーバーと偽の認可サーバーまでの構成" width="800"></p>
 <p align="center"><sub>図3：MCP サーバーと偽の認可サーバーを、別々のトンネルで公開する</sub></p>
