@@ -198,7 +198,7 @@ claude.ai は、登録のリクエストに `scope`（スコープ）を付け�
 
 Allowed Client Scopes は、anonymous の登録で頼めるスコープを、realm の Default と Optional のスコープ（新しいクライアントにいつも付くものと、頼まれたら付けられるもの）に限っています。`openid` は、そこに入っていませんでした。
 
-`openid` を許して試し直すと、今度は `service_account` で弾かれました。またか、と思いました。Keycloak は、引っかかったところで止めるので、1つずつしか教えてくれません。まとめて言ってほしかったです。
+`openid` を許して試し直すと、今度は `service_account` で弾かれました。また？Keycloak は、引っかかったところで止めるので、1つずつしか教えてくれません。まとめて言ってほしかったです。
 
 見比べてわかったのは、claude.ai が、Keycloak の案内板の `scopes_supported`（「うちで頼めるスコープの一覧」）に並んだスコープを、全部まとめて頼んでいたことです。`openid` も `service_account` も、そこに載っていました。
 
