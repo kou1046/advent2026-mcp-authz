@@ -164,7 +164,7 @@ claude.ai は、初対面の認可サーバーからトークンをもらって�
 
 Keycloak は、anonymous の登録に、最初から「クライアント登録ポリシー」をいくつも付けています。登録のリクエストが来ると、それを順に確かめて、1つでも引っかかればそこで止めます。今回関わったのは、そのうちの2つです。
 
-<p align="center"><img src="images/registration-gates-v3.drawio.svg" alt="claude.ai の登録が、Trusted Hosts と Allowed Client Scopes の2つの関門を通ってクライアントになる" width="800"></p>
+<p align="center"><img src="images/registration-gates-v4.drawio.svg" alt="claude.ai の登録が、Trusted Hosts と Allowed Client Scopes の2つの関門を通ってクライアントになる" width="800"></p>
 <p align="center"><sub>図6：claude.ai の登録は、Keycloak の2つの関門を通ってやっとクライアントになる。どちらも default のままだと弾かれる</sub></p>
 
 ほかにも、「登録されたクライアントは同意画面が必須」「登録できるのは 200 件まで」といったポリシーが付いていますが、今回は止められなかったので、そのままにしています。
@@ -176,7 +176,7 @@ Trusted Hosts は、「誰から来たか」と「どこへ戻すか」を確か
 <p align="center"><img src="images/trusted-hosts.drawio.svg" alt="Trusted Hosts は送り元を確かめず、戻り先が claude.ai かを確かめる" width="800"></p>
 <p align="center"><sub>図7：Keycloak から見える送り元は nginx なので、送り元は確かめない。そのかわり、戻り先が claude.ai でなければ弾く</sub></p>
 
-| 確かめること | default | 今回 |
+| 確かめること | default | 変更後 |
 |---|---|---|
 | 登録を送ってきた相手（接続元）が、信頼するホストの一覧にあるか | 確かめる | 確かめない |
 | 登録の中身の URI（`redirect_uris` など）が、信頼するホストの下にあるか | 確かめる | 確かめる |
@@ -200,7 +200,7 @@ Allowed Client Scopes は、anonymous の登録で頼めるスコープを、rea
 
 見比べてわかったのは、claude.ai が、Keycloak の案内板の `scopes_supported` に並んだスコープを、全部まとめて頼んでいたことです。実は claude.ai は、案内板のこんなところまで見ていました。`scopes_supported` は、案内板に載っている「うちで頼めるスコープの一覧」です。前回の仮の認可サーバーは載せていなかったので、気づきませんでした。
 
-<p align="center"><img src="images/allowed-scopes-v2.drawio.svg" alt="claude.ai が頼んだスコープと、anonymous の登録で頼めるスコープの比較" width="800"></p>
+<p align="center"><img src="images/allowed-scopes-v3.drawio.svg" alt="claude.ai が頼んだスコープと、anonymous の登録で頼めるスコープの比較" width="800"></p>
 <p align="center"><sub>図8：claude.ai は案内板のスコープを全部頼んだが、そのうち openid と service_account は anonymous の登録では頼めなかった</sub></p>
 
 | スコープ | 案内板の `scopes_supported` | anonymous の登録で頼めるか（default） | 頼めない理由 |
