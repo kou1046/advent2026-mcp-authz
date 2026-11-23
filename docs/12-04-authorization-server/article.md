@@ -115,7 +115,7 @@ Keycloak は、認証なしの DCR を最初から受け付けはしますが、
 
 ## 感想
 
-<!-- TODO -->
+<!-- TODO: メモ。標準（RFC 9728・8414・7591）のおかげで、仮の認可サーバーから Keycloak へすんなり差し替えられた。MCP サーバーのコードは変えず、authorization_servers の URL だけ。手間がかかったのは標準の外側の、製品ごとの既定値（Trusted Hosts、hostname、claude.ai の CIMD 条件の none）。後半の AuthZEN（標準の形なら PDP を差し替えられる）にもつながる -->
 
 ## まとめ
 
