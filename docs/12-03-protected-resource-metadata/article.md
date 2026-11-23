@@ -49,6 +49,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 `authorization_servers` を知ったクライアントは、今度は認可サーバーのメタデータを取りに行きます。そこに、ログイン画面の入口（`authorization_endpoint`）や、クライアントの登録方法が書いてあります。本物の認可サーバーは次回立てるので、今回は偽物で受けます。
 
+> [!NOTE]
 > OAuth なのに、ログイン（認証）もするの？
 >
 > 「認可が要る」と言いながら、最後にはログイン画面が出てきます。「OAuth は認可の仕組みだから、認証（ログイン）に使うな」と聞いたことがある人は、ここで引っかかるかもしれません。
