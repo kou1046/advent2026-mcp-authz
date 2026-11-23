@@ -118,11 +118,64 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 {"id": "n1", "owner": "anonymous", "title": "（認可がないので伏せています）", "body": "（認可がないので伏せています）", "created_at": "…"}
 ```
 
+### 公開する
+
+<p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="720"></p>
+<p align="center"><sub>図5：claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー</sub></p>
+
+ネットワークの要件を満たすために、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。`https://….trycloudflare.com` の URL がもらえて、IPv4 でも届きます。
+
+ただ、OAuth を使っていないので、URL を知っていれば誰でも書き込めてしまいます。そこで、前に nginx を置いて、claude.ai が繋ぎに来る IP の範囲だけを通しています。試し終わったら、トンネルは閉じておきましょう。
+
+## claude.ai から繋いでみる
+
+カスタムコネクターに、トンネルの URL を「サインインなし」で登録してみました。そのときサーバーに届いたリクエストがこちらです。
+
+| 時刻 (UTC) | User-Agent | 版 | メソッド |
+|---|---|---|---|
+| 09:26:14 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
+| 09:26:18 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
+| 09:26:18 | Claude-User | 2026-07-28 | `server/discover` |
+| 09:26:18 | Claude-User | 2026-07-28 | `tools/list` |
+| 09:26:19 | Claude-User | 2026-07-28 | `server/discover` |
+| 09:26:19 | Claude-User | 2026-07-28 | `tools/list` |
+
+claude.ai は、もう新しい版で話しかけてきていました。`Claude-User` のリクエストは `server/discover` から始まっていて、`initialize` は使っていません。
+
+ただ、その前に、別の User-Agent（`python-httpx`）から古い版の `initialize` も届いています。送ったきりで続きがないので、登録のときの疎通確認なのかな、と思っていますが、確かめたわけではありません。このサーバーは新旧どちらの版にも応えるようにしてあるので、こちらにも返事ができています（あとで書きます）。
+
+### ツールを使わせてみる
+
+続いて、チャットで「メモを書いて、それから一覧を見せて」と頼んでみました。
+
+<!-- TODO: 中身を伏せる版でスクショ（chat-write-read.png）と下のログを撮り直す。今の画像は伏せる前のもの -->
+
+<p align="center"><img src="images/chat-write-read.png" alt="claude.ai でメモを書いて一覧を見せてもらう" width="600" style="border: 1px solid #999"></p>
+<p align="center"><sub>図6：「メモを書く」「メモを読む」を順に使って、書いたメモの一覧を返してくれた</sub></p>
+
+画面には、ツール名の `write_note` ではなく「メモを書く」と出ていますね。`tools/list` で返した `title` が、そのまま表示に使われています。
+
+| 時刻 (UTC) | メソッド | JSON-RPC の id |
+|---|---|---|
+| 09:28:22 | `server/discover` | `987823046` |
+| 09:28:25 | `server/discover` | `"server-discover-probe-1"` |
+| 09:28:25 | `tools/list` | `0` |
+| 09:28:26 | `tools/call`（`write_note`） | `1` |
+| 09:28:30 | `tools/call`（`read_note`） | `2` |
+
+`server/discover` で確かめて、`tools/list` で一覧を取って、`tools/call` で呼ぶ。さっきの3つのメソッドが、そのまま順に使われています。
+
+書き込まれたメモの `owner` は `anonymous` です。認可がないので、誰が書いたのかはサーバーにはわかりません。だから、自分で書いたばかりのメモでも、中身は伏せられています。
+
+## 工夫したところ
+
 ### 新旧どちらの版にも応える
 
-作り始める前に、気になったことがありました。claude.ai は、もう新しい版で話しかけてくるのでしょうか。まだ `initialize` から始める古い版かもしれませんよね。
+実は、作り始める前に気になったことがありました。claude.ai は、もう新しい版で話しかけてくるのでしょうか。まだ `initialize` から始める古い版かもしれません。
 
 わからないので、両方に応えるようにしました。`_meta` にバージョンが載っていれば新しい版として、載っていなければ古い版として処理します。
+
+実際、登録のときには `python-httpx` から古い版の `initialize` が届いていました。両方に応えるようにしておいて正解でした。
 
 ### ツールの失敗と、プロトコルのエラーを分ける
 
@@ -139,7 +192,7 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 
 ### curl で叩いてみる
 
-まずは手元から `server/discover` を叩いてみます。
+claude.ai に繋ぐ前に、手元で確かめるなら curl で十分です。たとえば `server/discover` はこう叩きます。
 
 ```sh
 curl http://127.0.0.1:8080/mcp \
@@ -167,55 +220,6 @@ curl http://127.0.0.1:8080/mcp \
 ```
 
 `capabilities` に `tools` があるので、「このサーバーはツールを持っている」とクライアントに伝わります。
-
-### 公開する
-
-<p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="720"></p>
-<p align="center"><sub>図5：claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー</sub></p>
-
-ネットワークの要件を満たすために、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。`https://….trycloudflare.com` の URL がもらえて、IPv4 でも届きます。
-
-ただ、OAuth を使っていないので、URL を知っていれば誰でも書き込めてしまいます。そこで、前に nginx を置いて、claude.ai が繋ぎに来る IP の範囲だけを通しています。試し終わったら、トンネルは閉じておきましょう。
-
-## claude.ai から繋いでみる
-
-カスタムコネクターに、トンネルの URL を「サインインなし」で登録してみました。そのときサーバーに届いたリクエストがこちらです。
-
-| 時刻 (UTC) | User-Agent | 版 | メソッド |
-|---|---|---|---|
-| 09:26:14 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
-| 09:26:18 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
-| 09:26:18 | Claude-User | 2026-07-28 | `server/discover` |
-| 09:26:18 | Claude-User | 2026-07-28 | `tools/list` |
-| 09:26:19 | Claude-User | 2026-07-28 | `server/discover` |
-| 09:26:19 | Claude-User | 2026-07-28 | `tools/list` |
-
-claude.ai は、もう新しい版で話しかけてきていました。`Claude-User` のリクエストは `server/discover` から始まっていて、`initialize` は使っていません。
-
-ただ、その前に、別の User-Agent（`python-httpx`）から古い版の `initialize` も届いています。送ったきりで続きがないので、登録のときの疎通確認なのかな、と思っていますが、確かめたわけではありません。新旧どちらにも応えるようにしておいたので、気づけたところですね。
-
-### ツールを使わせてみる
-
-続いて、チャットで「メモを書いて、それから一覧を見せて」と頼んでみました。
-
-<!-- TODO: 中身を伏せる版でスクショ（chat-write-read.png）と下のログを撮り直す。今の画像は伏せる前のもの -->
-
-<p align="center"><img src="images/chat-write-read.png" alt="claude.ai でメモを書いて一覧を見せてもらう" width="600" style="border: 1px solid #999"></p>
-<p align="center"><sub>図6：「メモを書く」「メモを読む」を順に使って、書いたメモの一覧を返してくれた</sub></p>
-
-画面には、ツール名の `write_note` ではなく「メモを書く」と出ていますね。`tools/list` で返した `title` が、そのまま表示に使われています。
-
-| 時刻 (UTC) | メソッド | JSON-RPC の id |
-|---|---|---|
-| 09:28:22 | `server/discover` | `987823046` |
-| 09:28:25 | `server/discover` | `"server-discover-probe-1"` |
-| 09:28:25 | `tools/list` | `0` |
-| 09:28:26 | `tools/call`（`write_note`） | `1` |
-| 09:28:30 | `tools/call`（`read_note`） | `2` |
-
-`server/discover` で確かめて、`tools/list` で一覧を取って、`tools/call` で呼ぶ。さっきの3つのメソッドが、そのまま順に使われています。
-
-書き込まれたメモの `owner` は `anonymous` です。認可がないので、誰が書いたのかはサーバーにはわかりません。だから、自分で書いたばかりのメモでも、中身は伏せられています。
 
 ## 壊してみる
 
