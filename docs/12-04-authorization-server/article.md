@@ -57,9 +57,21 @@ Keycloak も、もちろん前回と同じメタデータを返します。た�
 
 ### issuer にパスが入ると、メタデータはどこに置かれるのか
 
-前回の仮の認可サーバーの issuer は `https://bbb.trycloudflare.com` で、パスがありませんでした。なので、メタデータは素直に `/.well-known/oauth-authorization-server` に置けばよかったのです。
+案内板の場所は、認可サーバーの名前（issuer）から決まります。RFC 8414 の決まりはこうです。
 
-Keycloak の issuer は、`https://bbb.trycloudflare.com/realms/<realm 名>` のように、realm の名前がパスに入ります。こうなると、メタデータの置き場所の候補が増えます。MCP の仕様は、issuer にパスがあるとき、クライアントに次の順で探すよう求めています。
+```
+https://<issuer のホスト>/.well-known/oauth-authorization-server<issuer のパス>
+```
+
+前回の仮の認可サーバーの issuer は `https://bbb.trycloudflare.com` で、パスがありませんでした。なので、案内板はただの `/.well-known/oauth-authorization-server` でした。Keycloak の issuer には `/realms/mcp` が付くので、案内板は `/.well-known/oauth-authorization-server/realms/mcp` になります。
+
+ややこしいのは、OpenID Connect が昔から別の決まりを使っていることです。OpenID Connect では、パスの後ろに足します。
+
+```
+https://<issuer のホスト><issuer のパス>/.well-known/openid-configuration
+```
+
+issuer にパスがなければ、どちらの決まりでも同じ場所なので、前回は気にせずに済みました。パスがあると、2つの決まりで場所がずれます。なので MCP の仕様は、issuer にパスがあるとき、クライアントに次の順で探すよう求めています。
 
 | 順 | 置き場所 | 決まりの出どころ |
 |---|---|---|
