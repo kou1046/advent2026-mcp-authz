@@ -1,8 +1,7 @@
 ---
-title: 仮の認可サーバーを OSS の認可サーバーに置き換えて、claude.ai をログイン画面まで連れて来た
+title: 手元で OSS の認可サーバーを立ててみたら、claude.ai の DCR とちょっと相性が悪かった件
 tags: MCP OAuth Keycloak Claude
 ---
-<!-- TODO: タイトルは仮 -->
 
 ## 今日の問い
 
