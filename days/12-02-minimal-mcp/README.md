@@ -1,6 +1,6 @@
 # 12/2 claude.ai に登録できる MCP サーバーに最低限要るものを、壊しながら確かめた
 
-<!-- TODO: Qiita の記事を公開したらリンク -->
+記事：https://qiita.com/kou1046/items/e21d28ebeadb1e0a4292
 
 ## 動かす
 

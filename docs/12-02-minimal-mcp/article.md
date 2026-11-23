@@ -31,8 +31,8 @@ MCP のメッセージは [JSON-RPC 2.0](https://www.jsonrpc.org/specification) 
 - レスポンス：リクエストへの答え。同じ `id` に、`result`（成功）か `error`（失敗）を載せて返す
 - 通知：MCP サーバーに伝えるだけで、返事のいらないときに送る。`id` がない。MCP の仕様では名前が `notifications/` で始まる
 
-<p align="center"><img src="images/jsonrpc.drawio.svg" alt="JSON-RPC のリクエスト・レスポンスと通知" width="800"></p>
-<p align="center"><sub>図1：リクエストには同じ id でレスポンスが返り、通知には返事がない</sub></p>
+![JSON-RPC のリクエスト・レスポンスと通知](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/4536232/83628045-48c3-44f7-b5c4-f557a44ade26.png)
+***図1：リクエストには同じ id でレスポンスが返り、通知には返事がない***
 
 上から順に、リクエスト、レスポンス、通知の例です。
 
@@ -48,8 +48,8 @@ remote の MCP サーバーでは、これを HTTP に載せます。1つの URL
 
 以前の版と最新の版（2026-07-28）で大きく変わったのは、会話の始め方です。2025-11-25 までの MCP は、最初に `initialize` でバージョンや機能を交換してから、ツールを呼ぶ流れでした。
 
-<p align="center"><img src="images/initialize.drawio.svg" alt="以前の流れ：initialize で挨拶してから、セッション ID を付けてツールを呼ぶ" width="800"></p>
-<p align="center"><sub>図2：以前の流れ。initialize で決めたことを、サーバーがセッションとして覚えておく</sub></p>
+![以前の流れ：initialize で挨拶してから、セッション ID を付けてツールを呼ぶ](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/4536232/7749b4e3-d7f2-481c-a882-09ea354ff8f4.png)
+***図2：以前の流れ。initialize で決めたことを、サーバーがセッションとして覚えておく***
 
 この `initialize` は、JSON-RPC ではなく MCP が決めていたルールです。エディタと言語サーバーをつなぐ [LSP](https://microsoft.github.io/language-server-protocol/) にならって、最初に「どの版で話すか」「お互い何ができるか」を決めてから、本題に入っていました。続く `notifications/initialized` は、さっきの通知です。「準備できました」と伝えるだけで、返事は待ちません。
 
@@ -75,8 +75,8 @@ remote の MCP サーバーでは、これを HTTP に載せます。1つの URL
 
 1回1回のリクエストで話が完結するので、サーバーは前のリクエストを覚えておく必要がありません。セッション ID（`Mcp-Session-Id`）も廃止されました。サーバーを何台に増やしても、どれが受けてもいいわけです。
 
-<p align="center"><img src="images/meta.drawio.svg" alt="最新の流れ：毎回のリクエストの _meta に版と機能を載せる" width="800"></p>
-<p align="center"><sub>図3：最新の流れ。毎回 _meta で名乗るので、サーバーは何も覚えなくていい（キーの接頭辞 io.modelcontextprotocol/ は省略）</sub></p>
+![最新の流れ：毎回のリクエストの _meta に版と機能を載せる](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/4536232/bee262e3-c110-4e3a-9abe-6636ba2711e7.png)
+***図3：最新の流れ。毎回 _meta で名乗るので、サーバーは何も覚えなくていい（キーの接頭辞 io.modelcontextprotocol/ は省略）***
 
 最新の版で、サーバーが応えるべきメソッドはこの3つです。
 
@@ -115,8 +115,8 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 
 もう1つ、今は認可なしで一般公開しているので、セキュリティはほぼありません。誰が何を書いてくるかわからないので、メモがプロンプトインジェクションの入り口になります。なので、認可を実装するまでは、書き込み・読み取りともに、中身は全部伏せることにします。
 
-<p align="center"><img src="images/masking.drawio.svg" alt="作成する MCP サーバー" width="800"></p>
-<p align="center"><sub>図4：作成する MCP サーバー</sub></p>
+![作成する MCP サーバー](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/4536232/ad585d07-d8fa-449b-bd1e-14ae49edbe9e.png)
+***図4：作成する MCP サーバー***
 
 メモは、こんな形で返ります。
 
@@ -126,8 +126,8 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 
 ### 公開する
 
-<p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="800"></p>
-<p align="center"><sub>図5：トンネルの URL を claude.ai に登録すると、Cloudflare → cloudflared → nginx を通って手元の MCP サーバーに届く</sub></p>
+![claude.ai から MCP サーバーまでの構成](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/4536232/11862c7e-00c7-4be1-87cd-84d1e2e4f13a.png)
+***図5：トンネルの URL を claude.ai に登録すると、Cloudflare → cloudflared → nginx を通って手元の MCP サーバーに届く***
 
 ネットワークの要件を満たすために、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。`https://….trycloudflare.com` の URL がもらえて、IPv4 でも届きます。
 
@@ -138,7 +138,6 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 作ったものはこちらです。
 
 - https://github.com/kou1046/advent2026-mcp-authz/tree/main/days/12-02-minimal-mcp
-<!-- TODO: リポジトリを公開したら、リンクが開けるか確かめる -->
 
 Docker と make があれば、このディレクトリで同じものを動かせます。
 
@@ -158,8 +157,8 @@ make down     # 試し終わったら、トンネルごと止める
 
 チャットで「メモを書いて、それから一覧を見せて」と頼んでみました。
 
-<p align="center"><img src="images/chat-read-response.png" alt="claude.ai でメモを書いて一覧を見せてもらう" width="600" style="border: 1px solid #999"></p>
-<p align="center"><sub>図6：「メモを書く」「メモを読む」を順に使ってくれた。「メモを読む」のレスポンスでは、タイトルと本文が伏せられている</sub></p>
+![claude.ai でメモを書いて一覧を見せてもらう](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/4536232/6f3e60f1-1f40-4de3-a89d-f53e06687656.png)
+***図6：「メモを書く」「メモを読む」を順に使ってくれた。「メモを読む」のレスポンスでは、タイトルと本文が伏せられている***
 
 画面には、ツール名の `write_note` ではなく「メモを書く」と出ていますね。`tools/list` で返した `title` が、そのまま表示に使われています。
 
@@ -206,17 +205,16 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 
 まずは `BREAK=no-initialize` で立ち上げて、コネクターを登録し直してみました。
 
-<!-- TODO: この2枚は initialize と server/discover を両方壊したときのもの（画面は同じ）。initialize だけ壊した版で撮り直すか、このままにするか。トーストの ofid_ は隠す -->
 
-<p align="center"><img src="images/break-initialize-and-discover-dialog.png" alt="サーバーに接続していますが「見つかりません」になる" width="500" style="border: 1px solid #999"></p>
-<p align="center"><sub>図7：「サーバーに接続しています」が「見つかりません」になる</sub></p>
+![サーバーに接続していますが「見つかりません」になる](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/4536232/fb9e9f3c-267e-4c86-8db7-78554bee6ad2.png)
+***図7：「サーバーに接続しています」が「見つかりません」になる***
 
 追加のダイアログが、最初の「サーバーに接続しています」で止まりました。このとき届いていたのは、`python-httpx` の謎の `initialize` だけです。この確認の正体は、あの謎の `initialize` だったわけです。
 
 「このまま続ける」を押せば、手動で「サインインなし」を選んで追加まではできます。ただ、使おうとするとこう言われて、使えませんでした。
 
-<p align="center"><img src="images/break-initialize-toast-masked.png" alt="確認時にサーバーからサインインを求められました" width="400" style="border: 1px solid #999"></p>
-<p align="center"><sub>図8：サインインは求めていないのに、求められたことにされる</sub></p>
+![確認時にサーバーからサインインを求められました](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/4536232/028ee691-03b1-4b61-8b89-1a78976679f1.png)
+***図8：サインインは求めていないのに、求められたことにされる***
 
 `Claude-User` は、最後まで一度も来ませんでした。正常な `server/discover` が待っているのに、呼ばれもしません。
 
@@ -254,8 +252,8 @@ claude.ai は、まず `server/discover` で新しい版を試して、だめな
 
 そう考えると、いちばん面白かったのは、この2つの係のちぐはぐさです。
 
-<p align="center"><img src="images/two-roles.drawio.svg" alt="確認する係は古い版しか話せず、最新の版だけのサーバーはチャットする係が話しかける前に門前払いされる" width="800"></p>
-<p align="center"><sub>図9：チャットする係は最新の版で話せるのに、確認する係が古い版しか話せない</sub></p>
+![確認する係は古い版しか話せず、最新の版だけのサーバーはチャットする係が話しかける前に門前払いされる](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/4536232/041e2f87-a12e-48b8-8dca-eb2d98ab4e0e.png)
+***図9：チャットする係は最新の版で話せるのに、確認する係が古い版しか話せない***
 
 チャットする係は、新しい版を試して、だめなら古い版に落ちる、行儀のいい作りでした。それなのに、確認する係は古い版しか話せません。チャットする係は最新の版に追いついているのに、確認する係だけが取り残されている感じです。最新の版だけを実装したサーバーは、チャットする係が話しかける前に門前払いされてしまいます。
 
