@@ -13,6 +13,10 @@ TOKEN=$(curl -sf -d client_id=admin-cli -d username=admin -d password=admin -d g
 	"$KC/realms/master/protocol/openid-connect/token" | jq -r .access_token)
 api() { curl -sf -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' "$@"; }
 
+# 管理画面は master realm でログインするが、master realm は外に出していない。
+# master realm だけ、外から見える URL を手元の URL にして、管理画面を手元から使えるようにする。
+api -o /dev/null -X PUT -d "{\"attributes\":{\"frontendUrl\":\"$KC\"}}" "$KC/admin/realms/master"
+
 # realm とダミーユーザー（ログイン画面で使う）
 if ! api -o /dev/null "$KC/admin/realms/$REALM"; then
 	api -o /dev/null -d "{\"realm\":\"$REALM\",\"enabled\":true}" "$KC/admin/realms"
@@ -29,6 +33,17 @@ api -o /dev/null -X PUT -d "$(echo "$ANON" | jq -c '
 	.config["host-sending-registration-request-must-match"] = ["false"]
 	| .config["trusted-hosts"] = ["claude.ai"]
 	| .config["client-uris-must-match"] = ["true"]')" \
+	"$KC/admin/realms/$REALM/components/$ID"
+
+# 「Allowed Client Scopes」のポリシーは、登録で頼めるスコープを realm の既定のクライアントスコープに限っている。
+# claude.ai は、メタデータの scopes_supported に並んだスコープをまとめて頼んでくる。
+# そのうち openid と service_account は既定に入っていないので、そのままだと弾かれる。
+# メタデータで「対応している」と言ったスコープは、登録でも頼めるようにする。
+SUPPORTED=$(curl -sf "$KC/realms/$REALM/.well-known/openid-configuration" | jq -c .scopes_supported)
+SCOPES=$(api "$KC/admin/realms/$REALM/components?type=org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy&name=Allowed%20Client%20Scopes")
+ANON=$(echo "$SCOPES" | jq -c '.[] | select(.subType=="anonymous")')
+ID=$(echo "$ANON" | jq -r .id)
+api -o /dev/null -X PUT -d "$(echo "$ANON" | jq -c --argjson s "$SUPPORTED" '.config["allowed-client-scopes"] = $s')" \
 	"$KC/admin/realms/$REALM/components/$ID"
 
 echo "realm「${REALM}」の準備ができました（ユーザー alice / パスワード alice）"
