@@ -7,9 +7,10 @@ up:
 	BREAK=$(BREAK) $(COMPOSE) up -d --build mcp nginx
 
 # トンネルも立てて、claude.ai に登録する URL を出す。
+# cloudflared は作り直す（使い回すと、ログに残った前回の URL を拾ってしまう）。
 tunnel: up
-	$(COMPOSE) --profile tunnel up -d cloudflared
-	@until url=$$($(COMPOSE) logs cloudflared 2>&1 | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' | head -1); [ -n "$$url" ]; do sleep 1; done; \
+	$(COMPOSE) --profile tunnel up -d --force-recreate cloudflared
+	@until url=$$($(COMPOSE) logs cloudflared 2>&1 | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' | tail -1); [ -n "$$url" ]; do sleep 1; done; \
 		echo "claude.ai に登録する URL: $$url/mcp"
 
 smoke:
