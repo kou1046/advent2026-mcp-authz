@@ -1,5 +1,5 @@
 ---
-title: 仮の認可サーバーを Keycloak に置き換えて、claude.ai をログイン画面まで連れて来る
+title: 仮の認可サーバーを OSS の認可サーバーに置き換えて、claude.ai をログイン画面まで連れて来た
 tags: MCP OAuth Keycloak Claude
 ---
 <!-- TODO: タイトルは仮 -->
