@@ -147,7 +147,7 @@ Policy 'Allowed Client Scopes' rejected request to client-registration service.
 Requested scope 'openid' not trusted
 ```
 
-実は、Keycloak はトークンなしの登録に、最初からいくつも関門を付けています。そのうちの1つ（Trusted Hosts）は、手元で試したときに引っかかったので、事前に緩めておいたのですが、止められたのは別の関門でした。関門、まだあったんかい。
+実は、Keycloak はトークンなしの登録に、最初からいくつも関門を付けています。そのうちの1つ（Trusted Hosts）は、手元で試したときに引っかかったので、事前に緩めておいたのですが、止められたのは別の関門でした。
 
 ### Keycloak の、DCR 登録の関門
 
