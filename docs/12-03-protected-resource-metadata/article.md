@@ -182,12 +182,12 @@ URL を入れると、claude.ai はサーバーを3段階で確かめて、「�
 
 1段目は 401 なのに、「完了」になっています。claude.ai にとって、この 401 は失敗ではなく、「サインインが要る」という合図だからです。
 
-設定の画面では、「認証」は「今すぐサインイン」に、「OAuth クライアント」は「Claude の公開アイデンティティを使用」（CIMD）に、「検出済み」と付いていました。
+「続ける」を押すと、設定の画面に進みます。「認証」は「今すぐサインイン」に、「OAuth クライアント」は「Claude の公開アイデンティティを使用」（CIMD）に、「検出済み」と付いていました。
 
 <p align="center"><img src="images/settings-cimd.drawio.png" alt="設定の画面。今すぐサインインと、Claude の公開アイデンティティを使用に、検出済みが付いている" width="400"></p>
 <p align="center"><sub>図5：「今すぐサインイン」と「Claude の公開アイデンティティを使用」（CIMD）に「検出済み」が付く（画面は、後で試す「自動的に登録」を選んだところ）</sub></p>
 
-「続ける」を押すと、ブラウザが仮の認可サーバーの `/authorize` に移って、「到達しました」と表示されました。
+「追加」を押すと、ブラウザが仮の認可サーバーの `/authorize` に移って、「到達しました」と表示されました。
 
 <!-- 画像：authserver: /authorize に到達しました。 -->
 
@@ -200,9 +200,9 @@ URL を入れると、claude.ai はサーバーを3段階で確かめて、「�
 | 1 | claude.ai | MCP サーバー：`POST /mcp`（古い版の `initialize`） | 401 | サーバーに接続しています |
 | 2 | claude.ai | MCP サーバー：`GET /.well-known/oauth-protected-resource/mcp` | 200 | サインイン設定を確認しています |
 | 3 | claude.ai | 認可サーバー：`GET /.well-known/oauth-authorization-server` | 200 | サインインプロバイダーを確認しています |
-| 4 | ユーザー（ブラウザ） | 認可サーバー：`GET /authorize?…` | 200 | （「続ける」を押した後） |
+| 4 | ユーザー（ブラウザ） | 認可サーバー：`GET /authorize?…` | 200 | （「追加」を押した後） |
 
-「続ける」を押したときにも、1〜3 をもう一度たどってから、4 に進みました。「検出済み」は、この 1 の 401 と、3 のメタデータを見て付けたものです。
+「追加」を押したときにも、1〜3 をもう一度たどってから、4 に進みました。「検出済み」は、この 1 の 401 と、3 のメタデータを見て付けたものです。
 
 認可サーバーのメタデータは、`authorization_servers` に書いた別のホストへ、ちゃんと取りに来ていました。
 
@@ -213,10 +213,10 @@ URL を入れると、claude.ai はサーバーを3段階で確かめて、「�
 
 ### ブラウザが /authorize に着くまで
 
-<p align="center"><img src="images/authorize-flow.drawio.svg" alt="claude.ai が /authorize の URL を渡し、ブラウザが JavaScript で認可サーバーへ移動する" width="800"></p>
+<p align="center"><img src="images/authorize-flow-v2.drawio.svg" alt="claude.ai が /authorize の URL を渡し、ブラウザが JavaScript で認可サーバーへ移動する" width="800"></p>
 <p align="center"><sub>図6：claude.ai は /authorize の URL だけを画面に渡し、code_verifier は自分で持っておく。ブラウザは、その URL へ移動する</sub></p>
 
-ブラウザの開発者ツールで「続ける」を押したときの通信を見ると、claude.ai の画面は、まず claude.ai のサーバーに fetch していました。返ってきたのは、こんな JSON です（値は一部省略）。
+ブラウザの開発者ツールで「追加」を押したときの通信を見ると、claude.ai の画面は、まず claude.ai のサーバーに fetch していました。返ってきたのは、こんな JSON です（値は一部省略）。
 
 ```json
 {
@@ -260,7 +260,7 @@ PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、
 
 <!-- 画像：CIMD=false のときの設定の画面（自動的に登録 検出済み） -->
 
-DCR のときは、3 の認可サーバーのメタデータの後に `/register` が来て、その返事の `client_id` で `/authorize` に進みました。登録はダイアログの確認のときではなく、「続ける」を押して認可を始めるときに来ます。届いた中身は、こうです。
+DCR のときは、3 の認可サーバーのメタデータの後に `/register` が来て、その返事の `client_id` で `/authorize` に進みました。登録はダイアログの確認のときではなく、「追加」を押して認可を始めるときに来ます。届いた中身は、こうです。
 
 ```json
 {
