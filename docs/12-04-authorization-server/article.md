@@ -13,6 +13,8 @@ claude.ai が探しに来た認可サーバーは、何を返せばいいので�
 
 ゴールは、claude.ai からブラウザが Keycloak のログイン画面にたどり着くところまでです。ログインした先（トークンが MCP サーバーに届くところ）は、次回に回します。
 
+先に言ってしまうと、差し替え自体は標準のおかげで拍子抜けするほど簡単でした。ただ、claude.ai の登録（DCR）は、Keycloak の default の設定にすんなりとは受け付けてもらえませんでした。
+
 ## 認可サーバーは何を返すのか
 
 仕様：[RFC 8414](https://www.rfc-editor.org/rfc/rfc8414)、[MCP 2026-07-28 Authorization](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization)
