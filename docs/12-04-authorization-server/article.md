@@ -204,7 +204,7 @@ Allowed Client Scopes は、anonymous の登録で頼めるスコープを、rea
 
 見比べてわかったのは、claude.ai が、Keycloak の案内板の `scopes_supported` に並んだスコープを、全部まとめて頼んでいたことです。実は claude.ai は、案内板のこんなところまで見ていました。`scopes_supported` は、案内板に載っている「うちで頼めるスコープの一覧」です。前回の仮の認可サーバーは載せていなかったので、気づきませんでした。
 
-<p align="center"><img src="images/allowed-scopes-v5.drawio.svg" alt="claude.ai が頼んだスコープと、anonymous の登録で頼めるスコープの比較" width="800"></p>
+<p align="center"><img src="images/allowed-scopes-v6.drawio.svg" alt="claude.ai が頼んだスコープと、anonymous の登録で頼めるスコープの比較" width="800"></p>
 <p align="center"><sub>図8：claude.ai は案内板のスコープを全部頼んでくる。default のスコープチェックは realm の Default・Optional しか許さないので、openid と service_account で止まる。変更後は、案内板の scopes_supported を許す</sub></p>
 
 | スコープ | 案内板の `scopes_supported` | anonymous の登録で頼めるか（default） | 頼めない理由 |
