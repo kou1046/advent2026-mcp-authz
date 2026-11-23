@@ -171,30 +171,99 @@ make down
 
 ## claude.ai から繋いでみる
 
-カスタムコネクターの設定を変えながら、4通り登録してみました。
+`make tunnel` で立ち上げて、MCP の URL をカスタムコネクターに登録してみます。まずは設定を変えずに、既定のまま進めます。
 
-| # | 認証 | OAuth クライアント |
-|---|---|---|
-| 1 | 今すぐサインイン | Claude の公開アイデンティティ（既定） |
-| 2 | 今すぐサインイン | 自動的に登録 |
-| 3 | 今すぐサインイン | 独自の OAuth クライアント |
-| 4 | 必要なときにサインイン | 既定のまま |
+### 追加のダイアログ
 
-### 今すぐサインイン（既定）
+URL を入れると、claude.ai はサーバーを3段階で確かめて、「サーバーが見つかりました」と表示しました。
 
-<!-- TODO: 実測。追加のダイアログの3段階、ブラウザで /authorize に着いたときのスクショとアドレスバーの URL（client_id、redirect_uri、code_challenge、resource） -->
+<!-- 画像：追加のダイアログ（サーバーに接続しています 401／サインイン設定を確認しています 200／サインインプロバイダーを確認しています 200） -->
+
+設定の画面では、「認証」は「今すぐサインイン」に、「OAuth クライアント」は「Claude の公開アイデンティティを使用」（CIMD）に、「検出済み」と付いていました。
+
+<!-- 画像：設定の画面（今すぐサインイン 検出済み／Claude の公開アイデンティティを使用 検出済み） -->
+
+「続ける」を押すと、ブラウザが仮の認可サーバーの `/authorize` に移って、「到達しました」と表示されました。
+
+<!-- 画像：authserver: /authorize に到達しました。 -->
 
 ### 届いたリクエストを見てみる
 
-<!-- TODO: 実測。登録したときに届いた順の表（誰が、どのパスを、どの順で）。確認する係（python-httpx）とチャットする係（Claude-User）のどちらが 401 を受けて探しに行ったか。bbb に来ていたら authorization_servers をたどった証拠。同じホストだと当て推量と区別がつかない（2025-03-26 の仕様には、メタデータがなければ同じホストを認可サーバーとみなす決まりがあった） -->
+ダイアログの3段階は、claude.ai から届いた3つのリクエストに、そのまま対応していました。
 
-### 登録の方式を変えると
+| 届いた順 | 誰が | どこへ | 返したもの | ダイアログの表示 |
+|---|---|---|---|---|
+| 1 | python-httpx | `aaa`：`POST /mcp`（古い版の `initialize`） | 401 | サーバーに接続しています |
+| 2 | python-httpx | `aaa`：`GET /.well-known/oauth-protected-resource/mcp` | 200 | サインイン設定を確認しています |
+| 3 | python-httpx | `bbb`：`GET /.well-known/oauth-authorization-server` | 200 | サインインプロバイダーを確認しています |
+| 4 | ユーザーのブラウザ | `bbb`：`GET /authorize?…` | 200 | （「続ける」を押した後） |
 
-<!-- TODO: 実測。2（DCR）では /register に何が届いたか、3（静的）、4（必要なときに）ではいつサインインを求めてきたか。client_id の違いを表に -->
+「続ける」を押したときにも、1〜3 をもう一度たどってから、4 に進みました。「検出済み」は、この 1 の 401 と、3 のメタデータを見て付けたものです。
 
-## 認可サーバーの広告を変えてみる
+認可サーバーのメタデータは、ちゃんと別のホスト（`bbb`）に取りに来ていました。MCP のホスト（`aaa`）で、認可サーバーのメタデータを当て推量で探すアクセスはありません。メタデータの `authorization_servers` をたどった、と言えます。同じホストに置いていたら、ここは区別がつきませんでした。古い MCP の仕様（2025-03-26）には、メタデータがなければ MCP サーバーと同じホストを認可サーバーとみなす、という決まりもあったからです。
 
-<!-- TODO: 実測。CIMD=false で既定（CIMD）の claude.ai が DCR に落ちるか。DCR=false CIMD=false ではどうなるか -->
+なお、来たのは確認する係の python-httpx だけで、前回出てきたチャットする係（Claude-User）は来ていません。まだサインインが終わっていないので、チャットからは使えないからです。
+
+### ブラウザが /authorize に着くまで
+
+ブラウザの開発者ツールで「続ける」を押したときの通信を見ると、claude.ai の画面は、まず claude.ai のサーバーに fetch していました。返ってきたのは、こんな JSON です（値は一部省略）。
+
+```json
+{
+  "auth_url": "https://bbb.trycloudflare.com/authorize?response_type=code&client_id=…",
+  "state": "UHSPRFR134j5…",
+  "prior_auth_status": "not_connected",
+  "finish_in_app": false
+}
+```
+
+画面は、この `auth_url` へ、同じタブのまま移動します。間に 302 のリダイレクトはありませんでした。claude.ai のサーバーがメタデータをたどって URL を組み立て、画面がそこへブラウザを移動させる、という分担です。ログイン画面の中身には、claude.ai は触りません。
+
+`auth_url` に付いていたものは、次のとおりです。
+
+| パラメーター | 値 | 意味 |
+|---|---|---|
+| `response_type` | `code` | 認可コードをください |
+| `client_id` | `https://claude.ai/oauth/mcp-oauth-client-metadata` | claude.ai の名乗り。CIMD なので URL |
+| `redirect_uri` | `https://claude.ai/api/mcp/auth_callback` | ログインが終わったら、ここへ戻して |
+| `code_challenge`、`code_challenge_method` | `…`、`S256` | PKCE |
+| `state` | `…` | 戻ってきたときに、自分が始めたものか照らし合わせる |
+| `resource` | `https://aaa.trycloudflare.com/mcp` | どの MCP サーバー宛てのトークンが欲しいか（RFC 8707） |
+
+PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、fetch の返事に入っていません。claude.ai のサーバーが持ったままです。ブラウザを通るのは見られても困らない値だけ、という分け方になっています。
+
+## 登録の方式を変えてみる
+
+「OAuth クライアント」の選び方と、仮の認可サーバーの広告（`CIMD=false`）を変えながら、何通りか登録してみました。
+
+| 認可サーバーの広告 | claude.ai で選んだもの | 実際に使われたもの | `client_id` |
+|---|---|---|---|
+| CIMD と DCR | Claude の公開アイデンティティ（既定） | CIMD | `https://claude.ai/oauth/mcp-oauth-client-metadata` |
+| CIMD と DCR | 自動的に登録 | CIMD | 同上 |
+| DCR だけ | 自動的に登録（既定） | DCR | `authserver-7d22…`（`/register` で払い出したもの） |
+| DCR だけ | Claude の公開アイデンティティ | DCR | `authserver-0f76…` |
+| DCR だけ | 独自の OAuth クライアント | 独自 | `my-client`（入力したもの） |
+
+「自動的に登録」（DCR）を選んでも、認可サーバーが CIMD を広告していれば CIMD で来ました。逆に、CIMD を広告していないと、「Claude の公開アイデンティティ」を選んでも DCR で来ました。どちらも、エラーや警告は出ません。CIMD と DCR のどちらになるかは、画面の選択ではなく、認可サーバーの広告で決まっているようです。「独自の OAuth クライアント」だけは選んだとおりで、`/register` は来ず、入力した `client_id` で `/authorize` に来ました。
+
+`CIMD=false` にすると、設定の画面の「検出済み」も「自動的に登録」に移り、既定の選択も DCR になりました。
+
+<!-- 画像：CIMD=false のときの設定の画面（自動的に登録 検出済み） -->
+
+DCR のときは、3 の認可サーバーのメタデータの後に `/register` が来て、その返事の `client_id` で `/authorize` に進みました。登録はダイアログの確認のときではなく、「続ける」を押して認可を始めるときに来ます。届いた中身は、こうです。
+
+```json
+{
+  "redirect_uris": ["https://claude.ai/api/mcp/auth_callback"],
+  "token_endpoint_auth_method": "none",
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "client_name": "Claude",
+  "application_type": "web"
+}
+```
+
+`token_endpoint_auth_method` が `none` なので、claude.ai は `client_secret` を持たないクライアントとして登録しています。その代わりに、PKCE で守るという形です。
 
 ## 感想
 
@@ -202,7 +271,10 @@ make down
 
 ## まとめ
 
-<!-- TODO: 実測を受けて。claude.ai が認可サーバーを見つけるまでに要るもの（401 と WWW-Authenticate、RFC 9728 のメタデータ、RFC 8414 のメタデータ）と、登録の方式ごとの違い -->
+- MCP サーバーが 401 と `WWW-Authenticate` を返すと、claude.ai は MCP サーバーのメタデータ（RFC 9728）→ 認可サーバーのメタデータ（RFC 8414）の順にたどった。認可サーバーが別のホストでも、`authorization_servers` のとおりに取りに来た
+- 追加のダイアログの3段階は、この3つのリクエストそのものだった
+- `/authorize` の URL は claude.ai のサーバーが組み立て、画面がブラウザをそこへ移動させる。`code_verifier` はブラウザに渡らない
+- CIMD と DCR のどちらで来るかは、画面の選択ではなく、認可サーバーの広告で決まっていた（CIMD が優先）。独自の OAuth クライアントだけは、選んだとおりになった
 
 ## 次回
 
