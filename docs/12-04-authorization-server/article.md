@@ -41,7 +41,17 @@ Keycloak には、[MCP との連携ガイド](https://www.keycloak.org/securing-
 
 ほかにも、ログイン画面を自分で用意する前提の [Ory Hydra](https://github.com/ory/hydra) や、[ZITADEL](https://zitadel.com/)、[authentik](https://goauthentik.io/) などの選択肢があります。この連載で使う機能がひととおり揃っていて、MCP 向けの公式ガイドまであるので、Keycloak にしました。
 
-Keycloak では、ユーザーやクライアントを「realm」という単位でまとめます。今回は `mcp` という realm を1つ作ります。
+Keycloak には、独自の言葉がいくつかあります。今回出てくるのは、次の4つです。
+
+<p align="center"><img src="images/keycloak-terms.drawio.svg" alt="Keycloak の realm、クライアント、ユーザー、クライアント登録ポリシー" width="800"></p>
+<p align="center"><sub>図2：Keycloak の中は realm ごとに区切られている。claude.ai は、realm「mcp」のクライアント登録ポリシーを通って、クライアントとして登録される</sub></p>
+
+| 用語 | 何か |
+|---|---|
+| realm | ユーザーやクライアントをまとめる区画。issuer は realm ごとに1つ。今回は `mcp` を作る |
+| master realm | Keycloak 自体を管理するための realm。アプリ用には別の realm を作る |
+| クライアント | ログインを頼みに来るアプリ。今回は claude.ai が DCR で自分を登録する |
+| クライアント登録ポリシー | DCR を誰に、どこまで許すかの決まり |
 
 Keycloak も、もちろん前回と同じメタデータを返します。ただ、前回の仮の認可サーバーとは、置き場所が違います。
 
