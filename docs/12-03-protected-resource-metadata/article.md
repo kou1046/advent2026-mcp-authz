@@ -242,7 +242,7 @@ PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、
 「OAuth クライアント」の選び方と、仮の認可サーバーの広告（`CIMD=false`）を変えながら、何通りか登録してみました。
 
 <p align="center"><img src="images/registration.drawio.svg" alt="claude.ai は、ユーザーの選択よりも認可サーバーの対応を見て、CIMD と DCR を選ぶ" width="800"></p>
-<p align="center"><sub>図7：claude.ai は、画面で選んだ方式よりも、認可サーバーのメタデータを見て CIMD と DCR を選ぶ</sub></p>
+<p align="center"><sub>図7：claude.ai は、設定の画面で選んだ方式よりも、認可サーバーのメタデータを見て CIMD と DCR を選ぶ</sub></p>
 
 | 認可サーバーの広告 | claude.ai で選んだもの | 実際に使われたもの | `client_id` |
 |---|---|---|---|
@@ -252,7 +252,7 @@ PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、
 | DCR だけ | Claude の公開アイデンティティ | DCR | `authserver-0f76…` |
 | DCR だけ | 独自の OAuth クライアント | 事前登録（静的） | `my-client`（入力したもの） |
 
-「自動的に登録」（DCR）を選んでも、認可サーバーが CIMD を広告していれば CIMD で来ました。逆に、CIMD を広告していないと、「Claude の公開アイデンティティ」を選んでも DCR で来ました。どちらも、エラーや警告は出ません。CIMD と DCR のどちらになるかは、画面の選択ではなく、認可サーバーの広告で決まっているようです。「独自の OAuth クライアント」だけは選んだとおりで、`/register` は来ず、入力した `client_id` で `/authorize` に来ました。
+「自動的に登録」（DCR）を選んでも、認可サーバーが CIMD を広告していれば CIMD で来ました。逆に、CIMD を広告していないと、「Claude の公開アイデンティティ」を選んでも DCR で来ました。どちらも、エラーや警告は出ません。CIMD と DCR のどちらになるかは、設定の画面での選択ではなく、認可サーバーの広告で決まっているようです。「独自の OAuth クライアント」だけは選んだとおりで、`/register` は来ず、入力した `client_id` で `/authorize` に来ました。
 
 `CIMD=false` にすると、設定の画面の「検出済み」も「自動的に登録」に移り、既定の選択も DCR になりました。
 
@@ -260,9 +260,9 @@ PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、
 
 ### OAuth クライアントの登録の方式は、UI で選ばせなくてもいいのでは
 
-CIMD と DCR のどちらにするかを claude.ai が認可サーバーを見て決めてくれるなら、画面で選ばせなくてもいいのでは、と思いました。選んでも効かない選択肢は、むしろ迷わせます。意味があるのは、「独自の OAuth クライアント」を使うかどうかだけでした。
+CIMD と DCR のどちらにするかを claude.ai が認可サーバーを見て決めてくれるなら、コネクターの設定の画面で選ばせなくてもいいのでは、と思いました。選んでも効かない選択肢は、むしろ迷わせます。意味があるのは、「独自の OAuth クライアント」を使うかどうかだけでした。
 
-Claude の[ドキュメント](https://claude.com/docs/connectors/building/authentication)には、認可サーバーが CIMD に対応していれば CIMD、そうでなければ DCR に落ちる、と書いてあります。ただ、画面で別の方式を選んだらどうなるかは、[コネクターの追加のページ](https://claude.com/docs/connectors/custom/add-unlisted)にも「『検出済み』はそのままにしておいて」とあるだけで、選択が上書きされるとはどこにも書いていませんでした。
+Claude の[ドキュメント](https://claude.com/docs/connectors/building/authentication)には、認可サーバーが CIMD に対応していれば CIMD、そうでなければ DCR に落ちる、と書いてあります。ただ、設定の画面で別の方式を選んだらどうなるかは、[コネクターの追加のページ](https://claude.com/docs/connectors/custom/add-unlisted)にも「『検出済み』はそのままにしておいて」とあるだけで、選択が上書きされるとはどこにも書いていませんでした。
 
 ### /authorize へ連れて行く方法は、302 だけじゃない
 
@@ -272,7 +272,7 @@ Claude の[ドキュメント](https://claude.com/docs/connectors/building/authe
 
 - claude.ai はメタデータをたどって別のホストの認可サーバーまで来て、ブラウザを `/authorize` まで連れて行ってくれた
 - そのために、MCP サーバーに 401 とメタデータを返す仕組みを足し、仮の認可サーバーも立てた
-- 登録の方式は、画面で選んでも、claude.ai が認可サーバーに合わせて選び直してくれた（おせっかい）
+- 登録の方式は、設定の画面で選んでも、claude.ai が認可サーバーに合わせて選び直してくれた（おせっかい）
 
 ## 次回
 
