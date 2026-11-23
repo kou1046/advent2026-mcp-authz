@@ -98,8 +98,6 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 
 ## 作ってみる
 
-<!-- TODO: コードの置き場所（リポジトリを公開したらリンク） -->
-
 作るのは、メモを読み書きするだけの MCP サーバーです。サーバーは手元の PC で動かして、claude.ai から届くように、試すあいだだけインターネットに公開します。
 
 ツールは2つです。
@@ -128,6 +126,23 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 ネットワークの要件を満たすために、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。`https://….trycloudflare.com` の URL がもらえて、IPv4 でも届きます。
 
 ただ、OAuth を使っていないので、URL を知っていれば誰でも書き込めてしまいます。そこで、前に nginx を置いて、claude.ai が繋ぎに来る IP の範囲だけを通しています。試し終わったら、トンネルは閉じておきましょう。
+
+### 実際に作ったもの
+
+作ったものはこちらです。
+
+- https://github.com/kou1046/advent2026-mcp-authz/tree/day02
+<!-- TODO: リポジトリを公開して day02 のタグを打ったら、リンクが開けるか確かめる -->
+
+Docker と make があれば、手元で同じものを動かせます。
+
+```sh
+make tunnel   # MCP サーバー・nginx・cloudflared を立ち上げて、登録する URL を表示する
+make logs     # 届いたリクエストのログを見る
+make down     # 試し終わったら、トンネルごと止める
+```
+
+`make tunnel` が表示する `https://….trycloudflare.com/mcp` を、claude.ai のカスタムコネクターに「サインインなし」で登録すれば繋がります。
 
 ## claude.ai から繋いでみる
 
