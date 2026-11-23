@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kou1046/advent2026-mcp-authz/internal/notes"
+	"github.com/kou1046/advent2026-mcp-authz/days/12-02-minimal-mcp/internal/notes"
 )
 
 const maxRequest = 1 << 20

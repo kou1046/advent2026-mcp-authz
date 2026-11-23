@@ -131,10 +131,10 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 
 作ったものはこちらです。
 
-- https://github.com/kou1046/advent2026-mcp-authz/tree/day02
-<!-- TODO: リポジトリを公開して day02 のタグを打ったら、リンクが開けるか確かめる -->
+- https://github.com/kou1046/advent2026-mcp-authz/tree/main/days/12-02-minimal-mcp
+<!-- TODO: リポジトリを公開したら、リンクが開けるか確かめる -->
 
-Docker と make があれば、手元で同じものを動かせます。
+Docker と make があれば、このディレクトリで同じものを動かせます。
 
 ```sh
 make tunnel   # MCP サーバー・nginx・cloudflared を立ち上げて、登録する URL を表示する
