@@ -46,7 +46,12 @@ Keycloak の issuer は、`https://bbb.trycloudflare.com/realms/<realm 名>` の
 
 <!-- TODO: この順番は仕様で要確認 -->
 
-Keycloak がメタデータを置いているのは、3 です。なので、claude.ai が仕様どおりに探すなら、1 と 2 で 404 を受けてから、3 にたどり着くはずです。本当にそうなるのかは、ログで確かめます。
+手元の Keycloak（26.4）で確かめると、1 と 3 は 200、2 だけ 404 でした。Keycloak は、RFC 8414 の置き場所（1）にもちゃんと置いてくれています。なので、claude.ai が仕様どおりに探すなら、最初の 1 で見つかるはずです。本当にそうなるのかは、ログで確かめます。
+
+<!-- TODO: 「パスがあると 404 が並ぶ」はネタ帳の予想だったが、Keycloak 26.4 では並ばなそう。この小見出しを残すか、短くするか -->
+
+<!-- TODO: 確認のメモ（手元の Keycloak 26.4.7）。/realms/mcp/.well-known/oauth-authorization-server も 200。registration_endpoint は /realms/mcp/clients-registrations/openid-connect。code_challenge_methods_supported は plain と S256。token_endpoint_auth_methods_supported に none はない（CIMD を有効にしても claude.ai は選ばないはず）。client_id_metadata_document_supported は出ていない -->
+
 
 ## 作ってみる
 
@@ -66,9 +71,17 @@ Keycloak がメタデータを置いているのは、3 です。なので、cla
 - DCR（Keycloak の Client Registration）を、認証なしで受け付けるようにする
 - CIMD は有効にしない（有効にすると、前回の「おせっかい」で claude.ai は CIMD を選ぶはずなので）
 
-<!-- TODO: realm 名。Keycloak の匿名の DCR は、クライアント登録ポリシー（Trusted Hosts など）で制限がかかっている。claude.ai から登録できるように、どこを緩めるか要確認。緩めすぎない -->
+Keycloak は、認証なしの DCR を最初から受け付けはしますが、「Trusted Hosts」というポリシーで止めています。そのままだと、claude.ai の登録は `Host not trusted`（403）で弾かれます。今回は、このポリシーを次のように緩めます。
 
-<!-- TODO: Keycloak のメタデータの registration_endpoint の場所（/realms/<realm 名>/clients-registrations/openid-connect のはず）。token_endpoint_auth_methods_supported に none があるかも、念のため見る -->
+| 設定 | 既定 | 今回 |
+|---|---|---|
+| 登録を送ってきたホストを確かめる | する | しない（送り元は nginx で Anthropic の IP に絞っているので） |
+| 信頼するホスト | なし | `claude.ai` |
+| `redirect_uris` が信頼するホストか確かめる | する | する |
+
+つまり、「誰からの登録でも受け付けるが、戻り先は claude.ai だけ」にします。手元で試すと、`redirect_uris` がよそのドメインの登録は、ちゃんと 403 で弾かれました。
+
+<!-- TODO: realm 名（手元では mcp）。匿名 DCR で登録されたクライアントは、Consent Required のポリシーで「同意が要る」になる。ログイン後に同意画面が出るはず（次回の話かも） -->
 
 ### 公開する
 
