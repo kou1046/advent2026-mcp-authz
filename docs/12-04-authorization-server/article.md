@@ -11,9 +11,9 @@ tags: MCP OAuth Keycloak Claude
 
 claude.ai が探しに来た認可サーバーは、何を返せばいいのでしょうか。そして、本物の認可サーバーは、初対面の claude.ai の登録を、すんなり受け付けてくれるのでしょうか。
 
-ゴールは、claude.ai からブラウザが Keycloak のログイン画面にたどり着くところまでです。ログインした先（トークンが MCP サーバーに届くところ）は、次回に回します。
+先に言ってしまうと、差し替え自体は、標準のおかげで拍子抜けするほど簡単。ただ、claude.ai の登録（DCR）だけは、Keycloak の設定のクセに引っかかって、すんなりとは通してもらえませんでした。
 
-先に言ってしまうと、差し替え自体は標準のおかげで拍子抜けするほど簡単でした。ただ、claude.ai の登録（DCR）は、Keycloak の default の設定にすんなりとは受け付けてもらえませんでした。
+ゴールは、claude.ai からブラウザが Keycloak のログイン画面にたどり着くところまでです。ログインした先（トークンが MCP サーバーに届くところ）は、次回に回します。
 
 ## 認可サーバーは何を返すのか
 
@@ -64,7 +64,7 @@ Keycloak も、もちろん前回と同じメタデータを返します。た�
 https://<issuer のホスト>/.well-known/oauth-authorization-server<issuer のパス>
 ```
 
-前回の仮の認可サーバーの issuer は `https://bbb.trycloudflare.com` で、パスがありませんでした。なので、案内板はただの `/.well-known/oauth-authorization-server` でした。Keycloak の issuer には `/realms/mcp` が付くので、案内板は `/.well-known/oauth-authorization-server/realms/mcp` になります。
+前回の仮の認可サーバーの issuer は `https://bbb.trycloudflare.com` で、パスがなかったので、案内板はただの `/.well-known/oauth-authorization-server` でした。Keycloak の issuer には `/realms/mcp` が付くので、案内板は `/.well-known/oauth-authorization-server/realms/mcp` になります。
 
 ややこしいのは、OpenID Connect が昔から別の決まりを使っていることです。OpenID Connect では、パスの後ろに足します。
 
@@ -189,7 +189,7 @@ default では一覧が空っぽなので、誰から来ても弾かれます。
 
 なので、送り元は、範囲で書ける nginx の IP 制限に任せました。Keycloak に届く登録は、すでに Anthropic の範囲から来たものだけです。
 
-そのかわり、戻り先は `claude.ai` だけにしました。手元で、nginx を通さずに Keycloak を直接叩き、戻り先をよそのドメインにして登録してみると、ちゃんと 403 で弾かれました。nginx の IP 制限が1段目、この戻り先の確かめが2段目、という守りです。つまり、誰からの登録でも受け付けるけれど、戻り先は claude.ai だけです。
+そのかわり、戻り先は `claude.ai` だけにしました。手元で、nginx を通さずに Keycloak を直接叩き、戻り先をよそのドメインにして登録してみると、ちゃんと 403 で弾かれました。nginx の IP 制限が1段目、この戻り先の確かめが2段目。誰からの登録でも受け付けるけれど、戻り先は claude.ai だけ、という守りです。
 
 #### Allowed Client Scopes：ここで弾かれた関門
 
@@ -226,7 +226,7 @@ anonymous の登録で頼めるスコープを、案内板の `scopes_supported`
 
 > To control which scopes Claude requests, include a `scope` parameter in the `WWW-Authenticate` header on your `401` response. If you don't, Claude requests the scopes your protected resource metadata advertises in `scopes_supported`.
 
-401 の `WWW-Authenticate` に `scope` を付けるか、MCP サーバーのメタデータに `scopes_supported` を書けば、それを頼む、ということです。今回の MCP サーバーは、どちらも書いていませんでした。その場合にどうするかはドキュメントに書いておらず、実際には認可サーバーの案内板のスコープを全部頼んできました。MCP サーバーの側で要るスコープだけを書いておけば、`openid` や `service_account` は頼まれず、そもそもここで詰まらなかったはずです。こっちのほうが筋がいい直し方ですね。ただ、ここはまだ試していません。
+401 の `WWW-Authenticate` に `scope` を付けるか、MCP サーバーのメタデータに `scopes_supported` を書けば、それを頼む、ということです。今回の MCP サーバーは、どちらも書いていませんでした。その場合にどうするかはドキュメントに書いておらず、実際には認可サーバーの案内板のスコープを全部頼んできました。MCP サーバーの側で要るスコープだけを書いておけば、`openid` や `service_account` は頼まれず、そもそもここで詰まらなかったはずです。こっちのほうが筋がいいのですが、まだ試していません。
 
 > [!NOTE]
 > 同じところで詰まっている人もいる
@@ -279,7 +279,7 @@ Keycloak の管理画面で、realm「mcp」のクライアント一覧を見る
 <p align="center"><img src="images/clients-two.png" alt="クライアント一覧に Claude が2つ" width="430"></p>
 <p align="center"><sub>図11：連携し直すと、別の Client ID で「Claude」がもう1つ登録された</sub></p>
 
-DCR は、連携のたびに登録し直すようです。押すたびに増えるので、ちょっと怖いです。設定の画面の「アクセスの多いサーバーでは多数のクライアント登録が作成されます」は、このことですね。
+DCR は、連携のたびに登録し直すようです。押すたびに増えるのは、ちょっと怖い。設定の画面の「アクセスの多いサーバーでは多数のクライアント登録が作成されます」は、このことだったんですね。
 
 ## 感想
 
@@ -295,7 +295,7 @@ DCR は、連携のたびに登録し直すようです。押すたびに増え�
 
 標準どおりに話していても、製品ごとの「設定のクセ」は残ります。今回手間がかかったのは、まさにそこでした。Keycloak の default の設定に合わせるために、Trusted Hosts に止められ、Allowed Client Scopes に2回止められ、管理画面も外向けの URL でログインしに行ってエラーになりました。どれも、安全側に倒した default なので、Keycloak が悪いわけではありません。
 
-一方で、claude.ai のおせっかいは今回も健在でした。案内板の `scopes_supported` を見てスコープを全部頼み、`none` がないのを見てシークレットありで登録してきます。相手に合わせてくれるのはありがたいのですが、何を頼んでくるかは、ログを見るまでわかりませんでした。しかも、頼むスコープは MCP サーバーの側で決められたようです。先にドキュメントを読んでおけばよかった、と今回も思いました。
+一方で、claude.ai のおせっかいは今回も健在でした。案内板の `scopes_supported` を見てスコープを全部頼み、`none` がないのを見てシークレットありで登録してきます。相手に合わせてくれるのはありがたいのですが、何を頼んでくるかは、ログを見るまでわかりませんでした。しかも、頼むスコープは MCP サーバーの側で決められたらしい。先にドキュメントを読んでおけばよかった、と今回も思いました。
 
 ## まとめ
 
