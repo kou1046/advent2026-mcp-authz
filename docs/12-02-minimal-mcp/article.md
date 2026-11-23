@@ -200,6 +200,8 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 
 ここまで、最新の版（2026-07-28）に沿って「最低限要るもの」を見てきました。ところが、さっきのログでは、claude.ai は登録のときに、なぜか古い版の `initialize` も送ってきていました。本当に要るのはどっちなんでしょうか。片方ずつ壊して、claude.ai がどうなるかを見てみます。
 
+今回作ったサーバーには、わざと壊すためのオプションを付けてあります。`make tunnel BREAK=no-initialize` で古い版の `initialize` だけを、`make tunnel BREAK=no-discover` で `server/discover` だけを壊せます。
+
 ### initialize だけ壊す
 
 古い版の `initialize` にだけ、「そんなメソッドはない」と返すようにしました。`server/discover` は、ちゃんと動いたままです。
