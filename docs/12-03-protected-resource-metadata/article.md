@@ -66,8 +66,18 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 前回の MCP サーバーに、2つ足します。
 
-- トークンのないリクエストには、401 と `WWW-Authenticate` を返す。トークンの検証はまだしないので、今はどのリクエストも 401 になる
+- MCP の URL へのリクエストには、401 と `WWW-Authenticate` を返す
 - `/.well-known/oauth-protected-resource` で、メタデータを返す。`authorization_servers` には、同じホストを書く
+
+「トークン」は、`Authorization: Bearer …` ヘッダーで送られてくるものです。ただ、トークンの検証はまだしないので、付いていてもいなくても 401 にします。違うのは `WWW-Authenticate` の中身だけです。
+
+| リクエスト | 返すもの |
+|---|---|
+| `Authorization` ヘッダーがない（または Bearer ではない） | 401、`WWW-Authenticate: Bearer resource_metadata="…"` |
+| `Authorization: Bearer …` が付いている | 401、上に加えて `error="invalid_token"`（確かめられないので、無効として扱う） |
+| `/.well-known/oauth-protected-resource`（GET） | 200、メタデータ。ここはトークンなしで読める |
+
+`initialize` でも `server/discover` でも `tools/call` でも、メソッドを問わず同じです。通知（`notifications/…`）も 401 になります。
 
 認可サーバーの役は、偽物に任せます。届いたリクエストをログに出しながら、メタデータを返し、登録（`/register`）を受け付け、ログイン画面の入口（`/authorize`）では「ここまで来ました」とだけ表示するサーバーです。
 
