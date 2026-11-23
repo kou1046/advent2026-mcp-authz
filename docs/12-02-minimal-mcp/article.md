@@ -1,6 +1,6 @@
 ---
-title: 最新の MCP 仕様で最小のサーバーを自作して、claude.ai に繋いでみる
-tags: MCP JSON-RPC Go Claude
+title: 最新の MCP 仕様で最小のサーバーを自作したら、claude.ai はまだ initialize を待っていた
+tags: MCP JSON-RPC Claude
 ---
 
 ## 今日の問い
@@ -9,9 +9,11 @@ tags: MCP JSON-RPC Go Claude
 
 MCP サーバーとして claude.ai に認識してもらうには、最低限なにが要るのでしょうか。
 
-SDK を使えば数行で書けてしまいますが、それだと中で何が行き来しているのかが見えませんよね。なので今回は、SDK を使わずに JSON-RPC を直接書いて、Go で MCP サーバーを作ってみます。ツールはメモを読む `read_note` と、書く `write_note` の2つだけです。
+SDK を使えば数行で書けてしまいますが、それだと中で何が行き来しているのかが見えませんよね。なので今回は、SDK を使わずに JSON-RPC を直接書いて、MCP サーバーを作ってみます。ツールはメモを読む `read_note` と、書く `write_note` の2つだけです。
 
 今回作るのは、「誰でも叩ける場所に置かれた、認可のない MCP サーバー」です。OAuth はまだ導入しません。まずは、これを動くところまで持っていきます。
+
+先に言ってしまうと、最新の仕様どおりに作るだけでは、claude.ai には繋がりませんでした。何が足りなかったのかは、後半でサーバーを壊しながら確かめます。
 
 ## claude.ai に登録できる MCP サーバーに最低限要るもの
 
@@ -71,7 +73,7 @@ remote の MCP サーバーでは、これを HTTP に載せます。1つの URL
 }
 ```
 
-1回1回のリクエストで話が完結するので、サーバーは前のリクエストを覚えておく必要がありません。セッション ID（`Mcp-Session-Id`）も廃止されました。サーバーを何台に増やしても、どれが受けてもいいわけですね。
+1回1回のリクエストで話が完結するので、サーバーは前のリクエストを覚えておく必要がありません。セッション ID（`Mcp-Session-Id`）も廃止されました。サーバーを何台に増やしても、どれが受けてもいいわけです。
 
 <p align="center"><img src="images/meta.drawio.svg" alt="最新の流れ：毎回のリクエストの _meta に版と機能を載せる" width="800"></p>
 <p align="center"><sub>図3：最新の流れ。毎回 _meta で名乗るので、サーバーは何も覚えなくていい（キーの接頭辞 io.modelcontextprotocol/ は省略）</sub></p>
@@ -116,6 +118,8 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 <p align="center"><img src="images/masking.drawio.svg" alt="作成する MCP サーバー" width="800"></p>
 <p align="center"><sub>図4：作成する MCP サーバー</sub></p>
 
+メモは、こんな形で返ります。
+
 ```json
 {"id": "n1", "owner": "anonymous", "title": "（認可がないので伏せています）", "body": "（認可がないので伏せています）", "created_at": "…"}
 ```
@@ -148,7 +152,7 @@ make down     # 試し終わったら、トンネルごと止める
 
 ## claude.ai から繋いでみる
 
-カスタムコネクターに、トンネルの URL を「サインインなし」で登録しました。
+登録できたので、チャットから使ってみます。
 
 ### ツールを使わせてみる
 
@@ -161,7 +165,7 @@ make down     # 試し終わったら、トンネルごと止める
 
 「メモを読む」を開くと、サーバーが返したレスポンスがそのまま見られます。タイトルと本文は、ちゃんと伏せられていますね。「書いたメモ」の欄の中身は、Claude が自分で送った内容を覚えているだけです。
 
-一覧には、Claude が書いた `n2` のほかに、`n1` も並んでいます。これは、その少し前に手元から curl で書いたメモです。どちらも `owner` は `anonymous` で、Claude も「`n1` は私が書いたものではない」としか言えていません。認証がないので、誰が書いたのかはサーバーにもわからないわけですね。
+一覧には、Claude が書いた `n2` のほかに、`n1` も並んでいます。これは、その少し前に手元から curl で書いたメモです。どちらも `owner` は `anonymous` で、Claude も「`n1` は私が書いたものではない」としか言えていません。認証がないので、誰が書いたのかはサーバーにもわかりません。
 
 ### 届いたリクエストを見てみる
 
@@ -178,7 +182,7 @@ make down     # 試し終わったら、トンネルごと止める
 
 claude.ai は、もう新しい版で話しかけてきていました。`Claude-User` のリクエストは `server/discover` から始まっていて、`initialize` は使っていません。
 
-ただ、その前に、別の User-Agent（`python-httpx`）から、古い版の謎の `initialize` も届いています。送ったきりなので、登録のときの疎通確認かな、と思っていますが、確かめてはいません。このサーバーは新旧どちらの版にも応えるので、こちらにも返事ができています。
+ただ、その前に、別の User-Agent（`python-httpx`）から、古い版の謎の `initialize` も届いています。送ったきりなので、登録のときの疎通確認でしょうか。これは、あとで壊して確かめます。このサーバーは新旧どちらの版にも応えるので、こちらにも返事ができています。
 
 続いて、チャットでツールを使ったときです。
 
@@ -190,7 +194,7 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 | 05:21:39 | `tools/call`（`write_note`） | `1` |
 | 05:21:43 | `tools/call`（`read_note`） | `2` |
 
-`server/discover` で確かめて、`tools/list` で一覧を取って、`tools/call` で呼ぶ。さっきの3つのメソッドが、そのまま順に使われています。
+`server/discover` で確かめて、`tools/list` で一覧を取って、`tools/call` で呼ぶ。さっきの3つのメソッドが、そのまま順に使われています。先頭の `server/discover` だけは、4秒ほど早く届いていて、id も大きな数字です。なぜ2回確かめるのかは、謎です。
 
 ## 壊してみる
 
@@ -205,18 +209,18 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 <p align="center"><img src="images/break-initialize-and-discover-dialog.png" alt="サーバーに接続していますが「見つかりません」になる" width="500" style="border: 1px solid #999"></p>
 <p align="center"><sub>図7：「サーバーに接続しています」が「見つかりません」になる</sub></p>
 
-追加のダイアログが、最初の「サーバーに接続しています」で止まりました。このとき届いていたのは、`python-httpx` の謎の `initialize` だけです。この確認の正体は、あの謎の `initialize` だったわけですね。
+追加のダイアログが、最初の「サーバーに接続しています」で止まりました。このとき届いていたのは、`python-httpx` の謎の `initialize` だけです。この確認の正体は、あの謎の `initialize` だったわけです。
 
 「このまま続ける」を押せば、手動で「サインインなし」を選んで追加まではできます。ただ、使おうとするとこう言われて、使えませんでした。
 
-<p align="center"><img src="images/break-initialize-and-discover-toast.png" alt="確認時にサーバーからサインインを求められました" width="400" style="border: 1px solid #999"></p>
+<p align="center"><img src="images/break-initialize-toast-masked.png" alt="確認時にサーバーからサインインを求められました" width="400" style="border: 1px solid #999"></p>
 <p align="center"><sub>図8：サインインは求めていないのに、求められたことにされる</sub></p>
 
 `Claude-User` は、最後まで一度も来ませんでした。正常な `server/discover` が待っているのに、呼ばれもしません。
 
 ### server/discover だけ壊す
 
-今度は逆に、`server/discover` にだけ「そんなメソッドはない」と返すようにしました。
+今度は逆に、`server/discover` にだけ「そんなメソッドはない」と返すようにしました。HTTP のステータスは 404 で、本文は JSON-RPC のエラー（`-32601`）です。
 
 すると、登録はすんなり通りました。「サインインなし」も、最初から自動で選ばれています。チャットでも、普通にメモを読み書きできました。ログを見ると、こうなっていました。
 
@@ -240,7 +244,7 @@ claude.ai は、まず `server/discover` で新しい版を試して、だめな
 
 念のため、Claude のコネクターのドキュメント（[Building connectors](https://claude.com/docs/connectors/building) まわり）も見てみました。2026-11-23 時点では、MCP の版は認可の仕様として 2025-11-25 までが挙がっているだけで、2026-07-28 も `server/discover` も出てきません。`initialize` のことは書いてあります。
 
-最新の版に沿ってここまで書いてきましたが、今の claude.ai の本命は、まだ古い版の `initialize` でした。てへ。
+最新の版に沿ってここまで書いてきたのに、今の claude.ai の本命は、まだ古い版の `initialize` でした。先にドキュメントを読んでおけばよかったです。
 
 ## 感想
 
