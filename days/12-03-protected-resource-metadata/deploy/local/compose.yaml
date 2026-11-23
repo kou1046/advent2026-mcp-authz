@@ -1,5 +1,6 @@
 # 手元で MCP サーバーを試す構成。
-#   claude.ai → Cloudflare → cloudflared → nginx（IP で絞る）→ mcp
+#   claude.ai → Cloudflare → cloudflared → nginx（IP で絞る）┬ mcp（401 と RFC 9728 のメタデータ）
+#                                                            └ as（reqlog：偽の認可サーバー）
 # 手元からは mcp を 127.0.0.1:8080 で直接叩ける（nginx の 8081 は claude.ai の範囲以外 403）。
 name: advent-mcp
 
@@ -8,15 +9,25 @@ services:
     build:
       context: ../..
       dockerfile: deploy/local/mcp.Dockerfile
+    image: advent-mcp-12-03
     command: ["-addr", ":8080", "-break", "${BREAK:-}"]
     ports: ["127.0.0.1:8080:8080"]
+    networks: [local]
+
+  # 偽の認可サーバー。登録・認可の入口を広告して、届いたリクエストをログに出すだけ。
+  # DCR=false や CIMD=false で、広告する登録方式を切り替える。
+  as:
+    image: advent-mcp-12-03
+    depends_on: [mcp]
+    entrypoint: ["/reqlog"]
+    command: ["-addr", ":8080", "-mode", "as", "-dcr=${DCR:-true}", "-cimd=${CIMD:-true}"]
     networks: [local]
 
   nginx:
     image: nginx:1.30.7-alpine
     volumes: ["./nginx.conf:/etc/nginx/conf.d/default.conf:ro"]
     ports: ["127.0.0.1:8081:80"]
-    depends_on: [mcp]
+    depends_on: [mcp, as]
     networks: [local]
 
   cloudflared:

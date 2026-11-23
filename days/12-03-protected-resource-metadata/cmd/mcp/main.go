@@ -1,5 +1,9 @@
 // mcp は SDK を使わずに書いた、最低限の MCP サーバー（Streamable HTTP、ステートレス）。
-// ツールは read_note と write_note の2つ。認証はまだ入れていないので、誰が呼んでも owner は anonymous になる。
+// ツールは read_note と write_note の2つ。
+//
+// 12/3 から、トークンのないリクエストには 401 を返し、「認可が要る」と伝える。
+// どこの認可サーバーに行けばいいかは、Protected Resource Metadata（RFC 9728）で教える。
+// トークンの検証はまだしないので、今はどのリクエストも 401 になる。
 //
 // MCP 仕様 2026-07-28（initialize なし、毎回 _meta でバージョンを送る）を主にしつつ、
 // initialize から始める 2025-11-25 以前のクライアントにも応える。
@@ -27,17 +31,19 @@ import (
 const maxRequest = 1 << 20
 
 type server struct {
-	path    string
-	origins map[string]bool
-	brk     string
-	store   notes.Store
-	logger  *slog.Logger
+	path       string
+	authServer string
+	origins    map[string]bool
+	brk        string
+	store      notes.Store
+	logger     *slog.Logger
 }
 
 func main() {
 	addr := flag.String("addr", "127.0.0.1:8080", "listen address")
 	path := flag.String("path", "/mcp", "path of the MCP endpoint")
 	origins := flag.String("allowed-origins", "", "comma separated Origin values to accept (requests without Origin are always accepted)")
+	authServer := flag.String("authorization-server", "", "authorization server URL advertised in the metadata (empty means the same host)")
 	brk := flag.String("break", "", "break mode: no-initialize, no-discover, bad-version or bad-schema")
 	flag.Parse()
 
@@ -49,11 +55,12 @@ func main() {
 	}
 
 	s := &server{
-		path:    *path,
-		origins: map[string]bool{},
-		brk:     *brk,
-		store:   notes.NewMemory(),
-		logger:  slog.New(slog.NewJSONHandler(os.Stdout, nil)),
+		path:       *path,
+		authServer: *authServer,
+		origins:    map[string]bool{},
+		brk:        *brk,
+		store:      notes.NewMemory(),
+		logger:     slog.New(slog.NewJSONHandler(os.Stdout, nil)),
 	}
 	for _, o := range strings.Split(*origins, ",") {
 		if o = strings.TrimSpace(o); o != "" {
@@ -70,10 +77,11 @@ func main() {
 
 // logEntry はリクエストごとに1行出すログの中身。
 type logEntry struct {
-	era       string
-	rpcMethod string
-	rpcID     string
-	tool      string
+	era        string
+	rpcMethod  string
+	rpcID      string
+	tool       string
+	clientInfo json.RawMessage
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -92,12 +100,17 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"rpc_method", le.rpcMethod,
 		"rpc_id", le.rpcID,
 		"tool", le.tool,
+		"client_info", le.clientInfo,
+		"bearer", hasBearer(r),
 		"status", status,
 		"duration_ms", time.Since(start).Milliseconds(),
 	)
 }
 
 func (s *server) serve(w http.ResponseWriter, r *http.Request, le *logEntry) int {
+	if p := r.URL.Path; p == metadataPrefix || p == metadataPrefix+s.path {
+		return s.serveMetadata(w, r)
+	}
 	if r.URL.Path != s.path {
 		http.NotFound(w, r)
 		return http.StatusNotFound
@@ -125,6 +138,12 @@ func (s *server) serve(w http.ResponseWriter, r *http.Request, le *logEntry) int
 	le.rpcMethod = req.Method
 	le.rpcID = string(req.ID)
 	le.tool = req.params.Name
+	le.clientInfo = req.params.ClientInfo
+
+	// 本文を読んでから断るのは、何を呼ぼうとして断られたのかをログに残すため。
+	if !s.authorized(r) {
+		return s.unauthorized(w, r)
+	}
 
 	// 通知には返事をしない。
 	if req.ID == nil {

@@ -53,7 +53,8 @@ type params struct {
 	Name      string                     `json:"name"`
 	Arguments json.RawMessage            `json:"arguments"`
 	// 古い版の initialize だけが使う。
-	ProtocolVersion string `json:"protocolVersion"`
+	ProtocolVersion string          `json:"protocolVersion"`
+	ClientInfo      json.RawMessage `json:"clientInfo"`
 }
 
 func (p params) protocolVersion() string {
