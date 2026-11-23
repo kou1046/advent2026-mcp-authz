@@ -1,0 +1,51 @@
+mcp-1  | {"time":"2026-11-23T05:51:31.024369948Z","level":"INFO","msg":"listening","addr":":8080","path":"/mcp","break":"no-discover"}
+mcp-1  | {"time":"2026-11-23T05:51:54.37377641Z","level":"INFO","msg":"request","client_ip":"160.79.106.227","method":"POST","path":"/mcp","origin":"","user_agent":"python-httpx/0.28.1","protocol_version":"2025-11-25","era":"legacy","rpc_method":"initialize","rpc_id":"1","tool":"","status":200,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:25.442328029Z","level":"INFO","msg":"request","client_ip":"160.79.106.139","method":"POST","path":"/mcp","origin":"","user_agent":"python-httpx/0.28.1","protocol_version":"2025-11-25","era":"legacy","rpc_method":"initialize","rpc_id":"1","tool":"","status":200,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:25.956758571Z","level":"INFO","msg":"request","client_ip":"160.79.106.161","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"2026-07-28","era":"modern","rpc_method":"server/discover","rpc_id":"867851131","tool":"","status":404,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:26.326509029Z","level":"INFO","msg":"request","client_ip":"160.79.106.18","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"","era":"legacy","rpc_method":"initialize","rpc_id":"867851132","tool":"","status":200,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:27.21656378Z","level":"INFO","msg":"request","client_ip":"160.79.106.132","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"2025-11-25","era":"","rpc_method":"notifications/initialized","rpc_id":"","tool":"","status":202,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:27.553137155Z","level":"INFO","msg":"request","client_ip":"160.79.106.160","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"2025-11-25","era":"legacy","rpc_method":"tools/list","rpc_id":"867851133","tool":"","status":200,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:28.572955197Z","level":"INFO","msg":"request","client_ip":"160.79.106.18","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"","era":"legacy","rpc_method":"initialize","rpc_id":"70751693","tool":"","status":200,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:28.879652947Z","level":"INFO","msg":"request","client_ip":"160.79.106.167","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"2025-11-25","era":"","rpc_method":"notifications/initialized","rpc_id":"","tool":"","status":202,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:29.288828697Z","level":"INFO","msg":"request","client_ip":"160.79.106.25","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"2025-11-25","era":"legacy","rpc_method":"tools/list","rpc_id":"70751694","tool":"","status":200,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:42.20052747Z","level":"INFO","msg":"request","client_ip":"160.79.106.24","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"2025-11-25","era":"","rpc_method":"notifications/initialized","rpc_id":"","tool":"","status":202,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:45.008896596Z","level":"INFO","msg":"request","client_ip":"160.79.106.34","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"2026-07-28","era":"modern","rpc_method":"server/discover","rpc_id":"\"server-discover-probe-1\"","tool":"","status":404,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:45.494273513Z","level":"INFO","msg":"request","client_ip":"160.79.106.143","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"","era":"legacy","rpc_method":"initialize","rpc_id":"0","tool":"","status":200,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:45.926785388Z","level":"INFO","msg":"request","client_ip":"160.79.106.178","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"2025-11-25","era":"","rpc_method":"notifications/initialized","rpc_id":"","tool":"","status":202,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:46.311041639Z","level":"INFO","msg":"request","client_ip":"160.79.106.21","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"2025-11-25","era":"legacy","rpc_method":"tools/list","rpc_id":"1","tool":"","status":200,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:46.539038639Z","level":"INFO","msg":"request","client_ip":"160.79.106.143","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"2025-11-25","era":"legacy","rpc_method":"tools/call","rpc_id":"2","tool":"write_note","status":200,"duration_ms":0}
+mcp-1  | {"time":"2026-11-23T05:52:50.123128807Z","level":"INFO","msg":"request","client_ip":"160.79.106.182","method":"POST","path":"/mcp","origin":"","user_agent":"Claude-User","protocol_version":"2025-11-25","era":"legacy","rpc_method":"tools/call","rpc_id":"3","tool":"read_note","status":200,"duration_ms":0}
+nginx-1  | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+nginx-1  | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+nginx-1  | 10-listen-on-ipv6-by-default.sh: info: can not modify /etc/nginx/conf.d/default.conf (read-only file system?)
+nginx-1  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+nginx-1  | /docker-entrypoint.sh: Configuration complete; ready for start up
+nginx-1  | 2026/11/23 05:51:31 [notice] 1#1: using the "epoll" event method
+nginx-1  | 2026/11/23 05:51:31 [notice] 1#1: nginx/1.30.7
+nginx-1  | 2026/11/23 05:51:31 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+nginx-1  | 2026/11/23 05:51:31 [notice] 1#1: OS: Linux 6.8.0-100-generic
+nginx-1  | 2026/11/23 05:51:31 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1024:524288
+nginx-1  | 2026/11/23 05:51:31 [notice] 1#1: start worker processes
+nginx-1  | 2026/11/23 05:51:31 [notice] 1#1: start worker process 21
+nginx-1  | 2026/11/23 05:51:31 [notice] 1#1: start worker process 22
+nginx-1  | 240f:143:9a05:1:79da:fa84:c91d:bd08 - - [23/Nov/2026:05:51:38 +0000] "POST /mcp HTTP/1.1" 403 153 "-" "curl/8.7.1" "240f:143:9a05:1:79da:fa84:c91d:bd08"
+nginx-1  | 2026/11/23 05:51:38 [error] 21#21: *1 access forbidden by rule, client: 240f:143:9a05:1:79da:fa84:c91d:bd08, server: , request: "POST /mcp HTTP/1.1", host: "counting-our-thorough-rapidly.trycloudflare.com"
+nginx-1  | 160.79.106.227 - - [23/Nov/2026:05:51:54 +0000] "POST /mcp HTTP/1.1" 200 301 "-" "python-httpx/0.28.1" "160.79.106.227"
+nginx-1  | 160.79.106.139 - - [23/Nov/2026:05:52:25 +0000] "POST /mcp HTTP/1.1" 200 301 "-" "python-httpx/0.28.1" "160.79.106.139"
+nginx-1  | 160.79.106.161 - - [23/Nov/2026:05:52:25 +0000] "POST /mcp HTTP/1.1" 404 103 "-" "Claude-User" "160.79.106.161"
+nginx-1  | 160.79.106.18 - - [23/Nov/2026:05:52:26 +0000] "POST /mcp HTTP/1.1" 200 309 "-" "Claude-User" "160.79.106.18"
+nginx-1  | 160.79.106.132 - - [23/Nov/2026:05:52:27 +0000] "POST /mcp HTTP/1.1" 202 0 "-" "Claude-User" "160.79.106.132"
+nginx-1  | 160.79.106.160 - - [23/Nov/2026:05:52:27 +0000] "POST /mcp HTTP/1.1" 200 939 "-" "Claude-User" "160.79.106.160"
+nginx-1  | 160.79.106.18 - - [23/Nov/2026:05:52:28 +0000] "POST /mcp HTTP/1.1" 200 308 "-" "Claude-User" "160.79.106.18"
+nginx-1  | 160.79.106.167 - - [23/Nov/2026:05:52:28 +0000] "POST /mcp HTTP/1.1" 202 0 "-" "Claude-User" "160.79.106.167"
+nginx-1  | 160.79.106.25 - - [23/Nov/2026:05:52:29 +0000] "POST /mcp HTTP/1.1" 200 938 "-" "Claude-User" "160.79.106.25"
+nginx-1  | 160.79.106.24 - - [23/Nov/2026:05:52:42 +0000] "POST /mcp HTTP/1.1" 202 0 "-" "Claude-User" "160.79.106.24"
+nginx-1  | 160.79.106.34 - - [23/Nov/2026:05:52:45 +0000] "POST /mcp HTTP/1.1" 404 119 "-" "Claude-User" "160.79.106.34"
+nginx-1  | 160.79.106.143 - - [23/Nov/2026:05:52:45 +0000] "POST /mcp HTTP/1.1" 200 301 "-" "Claude-User" "160.79.106.143"
+nginx-1  | 160.79.106.178 - - [23/Nov/2026:05:52:45 +0000] "POST /mcp HTTP/1.1" 202 0 "-" "Claude-User" "160.79.106.178"
+nginx-1  | 160.79.106.21 - - [23/Nov/2026:05:52:46 +0000] "POST /mcp HTTP/1.1" 200 931 "-" "Claude-User" "160.79.106.21"
+nginx-1  | 160.79.106.143 - - [23/Nov/2026:05:52:46 +0000] "POST /mcp HTTP/1.1" 200 507 "-" "Claude-User" "160.79.106.143"
+nginx-1  | 160.79.106.182 - - [23/Nov/2026:05:52:50 +0000] "POST /mcp HTTP/1.1" 200 533 "-" "Claude-User" "160.79.106.182"
