@@ -1,5 +1,5 @@
 // reqlog は届いたリクエストをすべて JSON Lines でログに出すだけのサーバー。
-// Day 1 で、claude.ai などの MCP クライアントが登録時に何をどの順で叩くかを観察するために使う。
+// 12/3 で、claude.ai などの MCP クライアントが登録時に何をどの順で叩くかを観察するために使う。
 //
 //	-mode=404  すべて 404 を返す（何も知らないクライアントが最初にどこを叩くか）
 //	-mode=401  401 + WWW-Authenticate と Protected Resource Metadata (RFC 9728) を返す
