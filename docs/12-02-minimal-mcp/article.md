@@ -111,8 +111,8 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 
 もう1つ、全部公開するものなので、他人が書いたメモがそのまま別の人の Claude に返るのは怖いです。メモに何が仕込まれているかわからず、色々なプロンプトインジェクションの入り口になります。なので、認可を実装するまでは、読むときにタイトルと本文を全部伏せることにします。
 
-<p align="center"><img src="images/masking.drawio.svg" alt="伏せないと、知らない人が仕込んだメモが自分の Claude に届く。伏せると届かない" width="800"></p>
-<p align="center"><sub>図4：伏せないと、知らない人が仕込んだ指示が自分の Claude に届く</sub></p>
+<p align="center"><img src="images/masking.drawio.svg" alt="書き込みはそのままメモリに置き、読むときにタイトルと本文を伏せて返す" width="800"></p>
+<p align="center"><sub>図4：書くときはそのまま置き、読むときに伏せて返す</sub></p>
 
 ```json
 {"id": "n1", "owner": "anonymous", "title": "（認可がないので伏せています）", "body": "（認可がないので伏せています）", "created_at": "…"}
