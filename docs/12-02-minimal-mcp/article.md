@@ -29,6 +29,9 @@ MCP のメッセージは [JSON-RPC 2.0](https://www.jsonrpc.org/specification) 
 - レスポンス：リクエストへの答え。同じ `id` に、`result`（成功）か `error`（失敗）を載せて返す
 - 通知：MCP サーバーに伝えるだけで、返事のいらないときに送る。`id` がない。MCP の仕様では名前が `notifications/` で始まる
 
+<p align="center"><img src="images/jsonrpc.drawio.svg" alt="JSON-RPC のリクエスト・レスポンスと通知" width="720"></p>
+<p align="center"><sub>図1：リクエストには同じ id でレスポンスが返り、通知には返事がない</sub></p>
+
 上から順に、リクエスト、レスポンス、通知の例です。
 
 ```json
@@ -148,7 +151,7 @@ curl http://127.0.0.1:8080/mcp \
 ### 公開する
 
 <p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="720"></p>
-<p align="center"><sub>図1：claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー</sub></p>
+<p align="center"><sub>図2：claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー</sub></p>
 
 ネットワークの要件を満たすために、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。`https://….trycloudflare.com` の URL がもらえて、IPv4 でも届きます。
 
@@ -176,7 +179,7 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 続いて、チャットで「メモを書いて、それから一覧を見せて」と頼んでみました。
 
 <p align="center"><img src="images/chat-write-read.png" alt="claude.ai でメモを書いて一覧を見せてもらう" width="600" style="border: 1px solid #999"></p>
-<p align="center"><sub>図2：「メモを書く」「メモを読む」を順に使って、書いたメモの一覧を返してくれた</sub></p>
+<p align="center"><sub>図3：「メモを書く」「メモを読む」を順に使って、書いたメモの一覧を返してくれた</sub></p>
 
 画面には、ツール名の `write_note` ではなく「メモを書く」と出ていますね。`tools/list` で返した `title` が、そのまま表示に使われています。
 
