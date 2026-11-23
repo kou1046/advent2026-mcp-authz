@@ -267,6 +267,8 @@ PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、
 
 CIMD と DCR のどちらにするかを claude.ai が認可サーバーを見て決めてくれるなら、画面で選ばせなくてもいいのでは、と思いました。選んでも効かない選択肢は、むしろ迷わせます。意味があるのは、「独自の OAuth クライアント」を使うかどうかだけでした。
 
+Claude の[ドキュメント](https://claude.com/docs/connectors/building/authentication)には、認可サーバーが CIMD に対応していれば CIMD、そうでなければ DCR に落ちる、と書いてあります。ただ、画面で別の方式を選んだらどうなるかは、[コネクターの追加のページ](https://claude.com/docs/connectors/custom/add-unlisted)にも「『検出済み』はそのままにしておいて」とあるだけで、選択が上書きされるとはどこにも書いていませんでした。
+
 <!-- TODO -->
 
 ## まとめ
