@@ -197,16 +197,16 @@ URL を入れると、claude.ai はサーバーを3段階で確かめて、「�
 
 | 届いた順 | 誰が | どこへ | 返したもの | ダイアログの表示 |
 |---|---|---|---|---|
-| 1 | python-httpx | MCP サーバー：`POST /mcp`（古い版の `initialize`） | 401 | サーバーに接続しています |
-| 2 | python-httpx | MCP サーバー：`GET /.well-known/oauth-protected-resource/mcp` | 200 | サインイン設定を確認しています |
-| 3 | python-httpx | 認可サーバー：`GET /.well-known/oauth-authorization-server` | 200 | サインインプロバイダーを確認しています |
-| 4 | ユーザーのブラウザ | 認可サーバー：`GET /authorize?…` | 200 | （「続ける」を押した後） |
+| 1 | claude.ai | MCP サーバー：`POST /mcp`（古い版の `initialize`） | 401 | サーバーに接続しています |
+| 2 | claude.ai | MCP サーバー：`GET /.well-known/oauth-protected-resource/mcp` | 200 | サインイン設定を確認しています |
+| 3 | claude.ai | 認可サーバー：`GET /.well-known/oauth-authorization-server` | 200 | サインインプロバイダーを確認しています |
+| 4 | ユーザー（ブラウザ） | 認可サーバー：`GET /authorize?…` | 200 | （「続ける」を押した後） |
 
 「続ける」を押したときにも、1〜3 をもう一度たどってから、4 に進みました。「検出済み」は、この 1 の 401 と、3 のメタデータを見て付けたものです。
 
 認可サーバーのメタデータは、ちゃんと別のホストの認可サーバーに取りに来ていました。MCP サーバーのホストで、認可サーバーのメタデータを当て推量で探すアクセスはありません。メタデータの `authorization_servers` をたどった、と言えます。同じホストに置いていたら、ここは区別がつきませんでした。古い MCP の仕様（2025-03-26）には、メタデータがなければ MCP サーバーと同じホストを認可サーバーとみなす、という決まりもあったからです。
 
-なお、来たのは確認する係の python-httpx だけで、前回出てきたチャットする係（Claude-User）は来ていません。まだサインインが終わっていないので、チャットからは使えないからです。
+なお、claude.ai から来たのは、確認する係（User-Agent が python-httpx）だけでした。前回出てきたチャットする係（Claude-User）は来ていません。まだサインインが終わっていないので、チャットからは使えないからです。
 
 ### ブラウザが /authorize に着くまで
 
