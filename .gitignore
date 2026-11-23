@@ -3,3 +3,5 @@
 # go build で日ごとのディレクトリにできるバイナリ
 /days/*/mcp
 /days/*/reqlog
+# Qiita 投稿用に書き出した PNG（リポジトリには入れない）
+docs/*/images/qiita/
