@@ -9,7 +9,7 @@ tags: MCP OAuth Keycloak Claude
 
 今回は、このハリボテを本物の認可サーバー（Keycloak）に置き換えます。
 
-claude.ai が探しに来た認可サーバーは、何を返せばいいのでしょうか。そして、Keycloak はそれをそのまま返してくれるのでしょうか。
+claude.ai が探しに来た認可サーバーは、何を返せばいいのでしょうか。そして、本物の認可サーバーは、初対面の claude.ai の登録を、すんなり受け付けてくれるのでしょうか。
 
 ゴールは、claude.ai からブラウザが Keycloak のログイン画面にたどり着くところまでです。ログインした先（トークンが MCP サーバーに届くところ）は、次回に回します。
 
@@ -218,13 +218,13 @@ anonymous の登録で頼めるスコープを、案内板の `scopes_supported`
 
 3回目で、やっと登録が通りました。長かったです。
 
-ただ、これは許すほうに寄せた直し方です。どこから来たかわからないクライアントでも、`service_account` や `offline_access`（リフレッシュトークン）を自分に割り当てられるようになりました。今回は戻り先を claude.ai だけに絞っているので、大きな問題はありません。本番なら逆に、案内板から要らないスコープを外す（`scopes_supported` を絞る）ほうが筋だと思います。
+ただ、これは許すほうに寄せた直し方です。どこから来たかわからないクライアントでも、`service_account` や `offline_access`（リフレッシュトークン）を自分に割り当てられるようになりました。今回は戻り先を claude.ai だけに絞っているので、大きな問題はありません。
 
 後から [Claude のドキュメント](https://claude.com/docs/connectors/building/authentication)を読むと、claude.ai が頼むスコープは、本来は MCP サーバーの側で決められるようでした。
 
 > To control which scopes Claude requests, include a `scope` parameter in the `WWW-Authenticate` header on your `401` response. If you don't, Claude requests the scopes your protected resource metadata advertises in `scopes_supported`.
 
-401 の `WWW-Authenticate` に `scope` を付けるか、MCP サーバーのメタデータに `scopes_supported` を書けば、それを頼む、ということです。今回の MCP サーバーは、どちらも書いていませんでした。その場合にどうするかはドキュメントに書いておらず、実際には認可サーバーの案内板のスコープを全部頼んできました。MCP サーバーの側で要るスコープだけを書いておけば、`openid` や `service_account` は頼まれず、そもそもここで詰まらなかったはずです。こっちのほうが筋がいい直し方ですね。
+401 の `WWW-Authenticate` に `scope` を付けるか、MCP サーバーのメタデータに `scopes_supported` を書けば、それを頼む、ということです。今回の MCP サーバーは、どちらも書いていませんでした。その場合にどうするかはドキュメントに書いておらず、実際には認可サーバーの案内板のスコープを全部頼んできました。MCP サーバーの側で要るスコープだけを書いておけば、`openid` や `service_account` は頼まれず、そもそもここで詰まらなかったはずです。こっちのほうが筋がいい直し方ですね。ただ、ここはまだ試していません。
 
 > [!NOTE]
 > 同じところで詰まっている人もいる
@@ -293,12 +293,13 @@ DCR は、連携のたびに登録し直すようです。押すたびに増え�
 
 標準どおりに話していても、製品ごとの「設定のクセ」は残ります。今回手間がかかったのは、まさにそこでした。Keycloak の default の設定に合わせるために、Trusted Hosts に止められ、Allowed Client Scopes に2回止められ、管理画面も外向けの URL でログインしに行ってエラーになりました。どれも、安全側に倒した default なので、Keycloak が悪いわけではありません。
 
-一方で、claude.ai のおせっかいは今回も健在でした。案内板の `scopes_supported` を見てスコープを全部頼み、`none` がないのを見てシークレットありで登録してきます。相手に合わせてくれるのはありがたいのですが、何を頼んでくるかは、ログを見るまでわかりませんでした。
+一方で、claude.ai のおせっかいは今回も健在でした。案内板の `scopes_supported` を見てスコープを全部頼み、`none` がないのを見てシークレットありで登録してきます。相手に合わせてくれるのはありがたいのですが、何を頼んでくるかは、ログを見るまでわかりませんでした。しかも、頼むスコープは MCP サーバーの側で決められたようです。先にドキュメントを読んでおけばよかった、と今回も思いました。
 
 ## まとめ
 
 - 標準のおかげで、仮の認可サーバーから Keycloak への差し替えに、手間はかからなかった
 - ただ、Keycloak の設定のクセと DCR は、相性が悪かった
+- MCP サーバーがスコープを書かないと、claude.ai は認可サーバーの案内板のスコープを全部頼んでくる
 - claude.ai を、Keycloak のログイン画面まで連れて来られた
 
 ## 次回
