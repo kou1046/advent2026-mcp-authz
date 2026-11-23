@@ -79,13 +79,7 @@ issuer にパスがなければ、どちらの決まりでも同じ場所なの�
 | 2 | `/.well-known/openid-configuration/realms/<realm 名>` | OpenID Connect（パスを差し込む） |
 | 3 | `/realms/<realm 名>/.well-known/openid-configuration` | OpenID Connect（パスの後ろに足す） |
 
-<!-- TODO: この順番は仕様で要確認 -->
-
-手元の Keycloak（26.4）で確かめると、1 と 3 は 200、2 だけ 404 でした。Keycloak は、RFC 8414 の置き場所（1）にもちゃんと置いてくれています。なので、claude.ai が仕様どおりに探すなら、最初の 1 で見つかるはずです。本当にそうなるのかは、ログで確かめます。
-
-<!-- TODO: 「パスがあると 404 が並ぶ」はネタ帳の予想だったが、Keycloak 26.4 では並ばなそう。この小見出しを残すか、短くするか -->
-
-<!-- TODO: 確認のメモ（手元の Keycloak 26.4.7）。/realms/mcp/.well-known/oauth-authorization-server も 200。registration_endpoint は /realms/mcp/clients-registrations/openid-connect。code_challenge_methods_supported は plain と S256。token_endpoint_auth_methods_supported に none はない（CIMD を有効にしても claude.ai は選ばないはず）。client_id_metadata_document_supported は出ていない -->
+手元の Keycloak（26.4）で確かめると、1 と 3 は 200、2 だけ 404 でした。Keycloak は、RFC 8414 の置き場所（1）にもちゃんと置いてくれています。なので、claude.ai が仕様どおりに探すなら、最初の 1 で見つかるはずです。
 
 
 ## 作ってみる
@@ -117,47 +111,139 @@ Keycloak は、認証なしの DCR を最初から受け付けはしますが、
 
 つまり、「誰からの登録でも受け付けるが、戻り先は claude.ai だけ」にします。手元で試すと、`redirect_uris` がよそのドメインの登録は、ちゃんと 403 で弾かれました。
 
-<!-- TODO: realm 名（手元では mcp）。匿名 DCR で登録されたクライアントは、Consent Required のポリシーで「同意が要る」になる。ログイン後に同意画面が出るはず（次回の話かも） -->
+実は、緩める必要があったのはこれだけではありませんでした。それは、実際に繋いでみてからわかりました（後で書きます）。
 
 ### 公開する
 
 前回と同じく、MCP サーバーと認可サーバーを別々のトンネルで公開します。変わるのは、認可サーバー側の中身です。
 
 - Keycloak は、自分が外からどの URL で見えているか（hostname）を知っている必要があります。トンネルの URL は立ててみるまでわからないので、前回の MCP サーバーと同じく、トンネルを先に立ててから Keycloak に渡します。
-- ユーザーのブラウザが来るのは、`/authorize` だけではなくなります。ログイン画面の CSS や JavaScript、ログインの送信も、ブラウザから来ます。<!-- TODO: nginx で誰でも通すパスを確かめる -->
-- 管理画面（`/admin`）は、外に出しません。
+- ユーザーのブラウザが来るのは、ログイン画面の入口だけではなくなります。ログイン画面の CSS や JavaScript、ログインの送信も、ブラウザから来ます。nginx では、次の3つを誰でも通します。
+  - ログイン画面の入口（`/realms/mcp/protocol/openid-connect/auth`）
+  - ログインの送信先（`/realms/mcp/login-actions/`）
+  - CSS や JavaScript（`/resources/`）
+- 管理画面（`/admin`）と、管理用の master realm（`/realms/master`）は、外に出しません。管理画面は手元から開きます。
 
 <p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーと Keycloak までの構成" width="800"></p>
 <p align="center"><sub>図4：構成は前回と同じで、認可サーバーが Keycloak になった。nginx は、ログイン画面まわりだけ誰でも通し、管理画面は外に出さない</sub></p>
 
 ### 実際に作ったもの
 
-<!-- TODO -->
+- https://github.com/kou1046/advent2026-mcp-authz/tree/main/days/12-04-authorization-server
+
+Docker、make、jq があれば、手元で試せます。`make tunnel` が表示する URL を claude.ai のカスタムコネクターに登録すると、Keycloak のログイン画面まで連れて行かれます。realm の設定（ダミーユーザー、DCR のポリシー）は、`deploy/local/keycloak-setup.sh` が立ち上げるたびに入れます。
+
+```sh
+make tunnel   # MCP サーバー・Keycloak・nginx・cloudflared（2本）を立ち上げて、登録する URL を表示する
+make logs     # 届いたリクエストのログを見る
+make down     # 試し終わったら、トンネルごと止める
+```
 
 ## claude.ai から繋いでみる
 
-<!-- TODO: 実測。追加のダイアログの3段階、設定の画面の「検出済み」がどこに付くか -->
+`make tunnel` で立ち上げて、MCP の URL をカスタムコネクターに登録してみます。
+
+追加のダイアログの3段階は、前回と同じく 401 → 200 → 200 で「サーバーが見つかりました」。設定の画面では、「OAuth クライアント」の「検出済み」が「自動的に登録」（DCR）に付きました。Keycloak は CIMD を広告していないので、狙いどおりです。
+
+### 登録できない
+
+ところが、「追加」を押すと、こう言われました。
+
+<p align="center"><img src="images/toast-dcr-failed.drawio.png" alt="test のサインインサービスに登録できませんでした" width="360"></p>
+<p align="center"><sub>図5：claude.ai が Keycloak に自分を登録できなかった</sub></p>
+
+え、Trusted Hosts は緩めたのに？ Keycloak のログを見ると、今度は別のポリシーに止められていました。
+
+```
+Policy 'Allowed Client Scopes' rejected request to client-registration service.
+Requested scope 'openid' not trusted
+```
+
+claude.ai は、登録のときに `openid` というスコープを頼んでいました。Keycloak の「Allowed Client Scopes」というポリシーは、認証なしの登録で頼めるスコープを、realm の既定のスコープに限っています。`openid` は、そこに入っていなかったのです。
+
+`openid` を足して試し直すと、今度は `service_account` で弾かれました。見比べてわかったのは、claude.ai が、Keycloak のメタデータの `scopes_supported` に並んだスコープを、全部まとめて頼んでいたことです。
+
+| スコープ | Keycloak のメタデータの `scopes_supported` | 登録で頼んでよい既定のスコープ |
+|---|---|---|
+| `openid` | ある | ない |
+| `service_account` | ある | ない |
+| ほかの11個 | ある | ある |
+
+Keycloak は、自分のメタデータで「対応している」と言っているスコープを、認証なしの登録では頼ませない、という既定だったわけです。そこで、登録で頼んでよいスコープを、メタデータの `scopes_supported` そのものにしました。
+
+| 匿名の登録のポリシー | 既定 | 今回 |
+|---|---|---|
+| Trusted Hosts | 送り元のホストを確かめる、信頼するホストなし | 送り元は確かめず、`redirect_uris` は `claude.ai` だけ |
+| Allowed Client Scopes | realm の既定のスコープだけ | メタデータの `scopes_supported` と同じ |
+
+これで、やっと登録が通りました。
 
 ### 届いたリクエストを見てみる
 
-<!-- TODO: 実測。well-known の 404 が並ぶか（1 → 2 → 3 の順か）、ほかに何を叩くか -->
+| 届いた順 | 誰が | どこへ | 返したもの |
+|---|---|---|---|
+| 1 | claude.ai | MCP サーバー：`POST /mcp` | 401 |
+| 2 | claude.ai | MCP サーバー：`/.well-known/oauth-protected-resource/mcp` | 200 |
+| 3 | claude.ai | Keycloak：`/.well-known/oauth-authorization-server/realms/mcp` | 200 |
+| 4 | claude.ai | Keycloak：登録の窓口（`/realms/mcp/clients-registrations/openid-connect`） | 201 |
+| 5 | ユーザー（ブラウザ） | Keycloak：ログイン画面の入口（`/realms/mcp/protocol/openid-connect/auth`） | 200 |
+| 6 | ユーザー（ブラウザ） | Keycloak：`/resources/…`（CSS、JavaScript、フォント） | 200 |
 
-### claude.ai は登録されたのか
-
-<!-- TODO: 実測。/register（clients-registrations）に届いた中身と返事。Keycloak の管理画面のクライアント一覧に、claude.ai（client_name Claude）が増えているスクショ。連携し直すと、もう1つ増えるか -->
+3 で、claude.ai は RFC 8414 の置き場所（パスを差し込む形）を最初に見に来て、一発で案内板を見つけました。404 は1つもありません。窓口のパスは前回の仮の認可サーバーとまったく違いますが、案内板に書いてあるので、claude.ai は迷わずたどり着いています。
 
 ### ログイン画面
 
-<!-- TODO: 実測。Keycloak のログイン画面のスクショ（アドレスバーの client_id が、登録で払い出されたものになっているか） -->
+ブラウザは、Keycloak のログイン画面にたどり着きました。
+
+<p align="center"><img src="images/login-page.png" alt="Keycloak のログイン画面。MCP、Sign in to your account" width="600"></p>
+<p align="center"><sub>図6：Keycloak のログイン画面。上の「MCP」は realm の名前</sub></p>
+
+アドレスバーの URL には、前回の仮の認可サーバーのときにはなかったものが2つ付いていました。
+
+| パラメーター | 今回の値 | 前回 |
+|---|---|---|
+| `client_id` | `532a3372-…`（Keycloak が登録で払い出した値） | `authserver-…`（DCR のとき） |
+| `scope` | `openid address email … service_account basic`（`scopes_supported` の全部） | なし |
+| `prompt` | `consent`（同意画面を必ず出して） | なし |
+
+`redirect_uri`、PKCE（`code_challenge`）、`state`、`resource` は、前回と同じでした。`scope` は、登録のときに頼んだのと同じ一覧です。ここでも claude.ai は、認可サーバーの案内板を見て頼み方を変えています。
+
+### claude.ai は登録されたのか
+
+Keycloak の管理画面で、realm「mcp」のクライアント一覧を見ると、「Claude」という名前のクライアントが増えていました。Client ID は、ログイン画面の URL の `client_id` と同じです。
+
+もう1つ気になったのが、クライアントの種類です。
+
+<p align="center"><img src="images/client-credentials.png" alt="Credentials タブ。Client Authenticator は Client Id and Secret" width="600"></p>
+<p align="center"><sub>図7：登録された claude.ai は、シークレットを持つクライアントになっていた</sub></p>
+
+前回の仮の認可サーバーには、claude.ai は `token_endpoint_auth_method: none`（シークレットなし）で登録してきました。今回は「Client Id and Secret」、つまりシークレットありです。Keycloak のメタデータの `token_endpoint_auth_methods_supported` には、`none` がありません。手元で試すと、Keycloak は `none` での登録ならシークレットなしで登録してくれます。なので、claude.ai のほうが、Keycloak に合わせてシークレットありで登録してきたことになります。
+
+ついでに、claude.ai からもう一度「連携」を押してみると、「Claude」がもう1つ増えました。
+
+<p align="center"><img src="images/clients-two.png" alt="クライアント一覧に Claude が2つ" width="430"></p>
+<p align="center"><sub>図8：連携し直すと、別の Client ID で「Claude」がもう1つ登録された</sub></p>
+
+DCR は、連携のたびに登録し直すようです。設定の画面の「アクセスの多いサーバーでは多数のクライアント登録が作成されます」は、このことですね。
 
 ## 感想
 
-<!-- TODO: メモ。標準（RFC 9728・8414・7591）のおかげで、仮の認可サーバーから Keycloak へすんなり差し替えられた。MCP サーバーのコードは変えず、authorization_servers の URL だけ。手間がかかったのは標準の外側の、製品ごとの既定値（Trusted Hosts、hostname、claude.ai の CIMD 条件の none）。後半の AuthZEN（標準の形なら PDP を差し替えられる）にもつながる -->
+### 標準のおかげで、差し替えるだけだった
+
+仮の認可サーバーを Keycloak に置き換えても、MCP サーバーのコードは1行も変えていません。変えたのは、メタデータの `authorization_servers` に書く URL だけです。claude.ai も、相手が仮の認可サーバーか Keycloak かを気にせず、同じ手順でたどって来ました。間の取り決め（RFC 9728、8414、7591）が標準なので、両側とも差し替えに気づかないわけです。これ、地味にすごくね？と思いました。
+
+### 手間がかかったのは、標準の外側だった
+
+その代わり、手間がかかったのは、Keycloak の既定値に合わせるところでした。Trusted Hosts に止められ、Allowed Client Scopes に2回止められ、管理画面も外向けの URL でログインしに行ってエラーになりました。どれも、安全側に倒した既定値なので、Keycloak が悪いわけではありません。標準どおりに話していても、製品ごとの「設定のクセ」は残る、ということですね。
+
+一方で、claude.ai のおせっかいは今回も健在でした。案内板の `scopes_supported` を見てスコープを全部頼み、`none` がないのを見てシークレットありで登録してきます。相手に合わせてくれるのはありがたいのですが、何を頼んでくるかは、ログを見るまでわかりませんでした。
 
 ## まとめ
 
-<!-- TODO -->
+- claude.ai は、Keycloak の案内板（RFC 8414）を一発で見つけ、DCR で自分を登録して、ブラウザを Keycloak のログイン画面まで連れて行った
+- 仮の認可サーバーを Keycloak に差し替えるのに、MCP サーバーのコードは変えなくてよかった。手間がかかったのは、Keycloak の匿名の登録のポリシー（Trusted Hosts、Allowed Client Scopes）
+- claude.ai は、認可サーバーの案内板に合わせて、頼むスコープも、登録するクライアントの種類も変えてきた（おせっかい）
 
 ## 次回
 
-今回は、ログイン画面まで来ました。次回は、claude.ai をクライアントとして登録し、ログインしてトークンが MCP サーバーに届くところまで進めます。
+今回は、ログイン画面まで来ました。次回は、実際にログインして、トークンが MCP サーバーに届くところまで進めます。登録されたクライアントは「同意が要る」設定になっていて、`prompt=consent` も付いていたので、同意画面も出てくるはずです。
