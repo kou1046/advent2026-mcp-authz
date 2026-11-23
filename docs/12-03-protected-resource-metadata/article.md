@@ -81,7 +81,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 認可サーバーの役は、偽物に任せます。届いたリクエストをログに出しながら、メタデータを返し、登録（`/register`）を受け付け、ログイン画面の入口（`/authorize`）では「ここまで来ました」とだけ表示するサーバーです。
 
-<p align="center"><img src="images/build-hosts-v2.drawio.svg" alt="作成する MCP サーバーと偽の認可サーバー" width="800"></p>
+<p align="center"><img src="images/build-hosts-v3.drawio.svg" alt="作成する MCP サーバーと偽の認可サーバー" width="800"></p>
 <p align="center"><sub>図2：作成するもの。MCP サーバーは 401 とメタデータだけを返し、その先は偽の認可サーバーが受ける</sub></p>
 
 ### 公開する
@@ -105,7 +105,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 ログイン画面は、ユーザー本人が見て操作するものです。なので claude.ai は、`/authorize` だけは自分で取りに行かず、ユーザーのブラウザをそこへ送り出します。前回と同じく claude.ai の IP だけを通していると、ユーザーのブラウザが門前払いされてしまうので、`/authorize` だけは制限を外しています。今回の中身は「ここまで来ました」の文字だけです。
 
-<p align="center"><img src="images/architecture-v3.drawio.svg" alt="claude.ai から MCP サーバーと偽の認可サーバーまでの構成" width="800"></p>
+<p align="center"><img src="images/architecture-v4.drawio.svg" alt="claude.ai から MCP サーバーと偽の認可サーバーまでの構成" width="800"></p>
 <p align="center"><sub>図3：MCP サーバーと偽の認可サーバーを、別々のトンネルで公開する。青い線は認可サーバーへの経路で、/authorize だけはユーザーのブラウザから直接来る</sub></p>
 
 ### 実際に作ったもの
