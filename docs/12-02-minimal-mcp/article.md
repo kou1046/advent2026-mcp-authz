@@ -21,7 +21,25 @@ SDK を使えば数行で書けてしまいますが、それだと中で何が�
 
 仕様：[MCP 2026-07-28](https://modelcontextprotocol.io/specification/2026-07-28)
 
-MCP のメッセージは [JSON-RPC 2.0](https://www.jsonrpc.org/specification) です。remote の MCP サーバーなら、1つの URL で POST を受けて、JSON-RPC のリクエストに JSON-RPC のレスポンスを返します。ここまでは昔から変わりません。
+#### JSON-RPC で話す
+
+MCP のメッセージは [JSON-RPC 2.0](https://www.jsonrpc.org/specification) です。やりとりするメッセージは3種類あります。
+
+- リクエスト：`id` と `method` を持つ。受けた側は必ず返事をする
+- レスポンス：リクエストと同じ `id` に、`result`（成功）か `error`（失敗）を載せて返す
+- 通知：`id` がない。返事はいらない。MCP では名前が `notifications/` で始まる
+
+上から順に、リクエスト、レスポンス、通知の例です。
+
+```json
+{"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}}
+{"jsonrpc": "2.0", "id": 1, "result": {"tools": []}}
+{"jsonrpc": "2.0", "method": "notifications/initialized"}
+```
+
+remote の MCP サーバーでは、これを HTTP に載せます。1つの URL で POST を受けて、本文のメッセージに応えます。リクエストならレスポンスを返し（`application/json` か、SSE の `text/event-stream`）、通知なら本文なしの 202 を返すだけです。ここは最新の版でも変わりません。
+
+#### 以前の流れ：最初に initialize する
 
 変わったのは、会話の始め方です。2025-11-25 までの MCP は、最初に `initialize` でバージョンや機能を交換してから、ツールを呼ぶ流れでした。
 
@@ -29,7 +47,11 @@ MCP のメッセージは [JSON-RPC 2.0](https://www.jsonrpc.org/specification) 
 initialize → notifications/initialized → tools/list → tools/call
 ```
 
-この `initialize` は、JSON-RPC ではなく MCP が決めていたルールです。エディタと言語サーバーをつなぐ [LSP](https://microsoft.github.io/language-server-protocol/) にならった形で、最初に挨拶して「どの版で話すか」「お互い何ができるか」を決めてから、本題に入っていました。ただ、決めた内容をサーバーが会話の間ずっと覚えておく必要があり、そのためにセッション ID も要っていました。
+この `initialize` は、JSON-RPC ではなく MCP が決めていたルールです。エディタと言語サーバーをつなぐ [LSP](https://microsoft.github.io/language-server-protocol/) にならった形で、最初に挨拶して「どの版で話すか」「お互い何ができるか」を決めてから、本題に入っていました。続く `notifications/initialized` は、さっきの通知です。「準備できました」と伝えるだけで、返事は待ちません。
+
+ただ、決めた内容をサーバーが会話の間ずっと覚えておく必要があり、そのためにセッション ID も要っていました。
+
+#### 最新の流れ：毎回のリクエストで名乗る
 
 ところが、最新の 2026-07-28 では、この `initialize` がなくなっています。代わりに、毎回のリクエストの `_meta` に、プロトコルのバージョンとクライアントの機能を載せます。
 
