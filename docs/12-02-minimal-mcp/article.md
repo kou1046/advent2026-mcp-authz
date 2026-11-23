@@ -111,8 +111,8 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 
 もう1つ、今は認可なしで一般公開しているので、セキュリティはほぼありません。誰が何を書いてくるかわからず、書いたものも読んだものも、色々なプロンプトインジェクションの入り口になります。なので、認可を実装するまでは、タイトルと本文を全部伏せることにします。メモ自体は保存しますが、書かれたタイトルと本文は捨てて、伏せた文言に置き換えて保存します。
 
-<p align="center"><img src="images/masking.drawio.svg" alt="書くときに伏せてメモリに置くので、読んでも伏せた中身しか返らない" width="800"></p>
-<p align="center"><sub>図4：書くときに伏せて置くので、読んでも伏せた中身しか返らない</sub></p>
+<p align="center"><img src="images/masking.drawio.svg" alt="作成する MCP サーバー" width="800"></p>
+<p align="center"><sub>図4：作成する MCP サーバー</sub></p>
 
 ```json
 {"id": "n1", "owner": "anonymous", "title": "（認可がないので伏せています）", "body": "（認可がないので伏せています）", "created_at": "…"}
