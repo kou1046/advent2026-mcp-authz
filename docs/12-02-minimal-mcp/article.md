@@ -192,24 +192,65 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 
 ## 壊してみる
 
-最低限の3つは、本当に全部要るのでしょうか。わざと壊して、claude.ai がどうなるかを見てみます。
+ここまで、最新の版（2026-07-28）に沿って「最低限要るもの」を見てきました。ところが、さっきのログでは、claude.ai は登録のときに、なぜか古い版の `initialize` も送ってきていました。本当に要るのはどっちなんでしょうか。片方ずつ壊して、claude.ai がどうなるかを見てみます。
 
-<!-- TODO: claude.ai で試した結果
-- no-initialize：initialize / server/discover に「そんなメソッドはない」と返す → 登録で止まる？ツールまでは行ける？
-- bad-schema：ツールの inputSchema を null にする → 一覧から外れる？全部拒否？
--->
+### initialize だけ壊す
+
+古い版の `initialize` にだけ、「そんなメソッドはない」と返すようにしました。`server/discover` は、ちゃんと動いたままです。
+
+<!-- TODO: この2枚は initialize と server/discover を両方壊したときのもの（画面は同じ）。initialize だけ壊した版で撮り直すか、このままにするか。トーストの ofid_ は隠す -->
+
+<p align="center"><img src="images/break-initialize-and-discover-dialog.png" alt="サーバーに接続していますが「見つかりません」になる" width="500" style="border: 1px solid #999"></p>
+<p align="center"><sub>図7：「サーバーに接続しています」が「見つかりません」になる</sub></p>
+
+追加のダイアログが、最初の「サーバーに接続しています」で止まりました。このとき届いていたのは、`python-httpx` の謎の `initialize` だけです。この確認の正体は、あの謎の `initialize` だったわけですね。
+
+「このまま続ける」を押せば、手動で「サインインなし」を選んで追加まではできます。ただ、使おうとするとこう言われて、使えませんでした。
+
+<p align="center"><img src="images/break-initialize-and-discover-toast.png" alt="確認時にサーバーからサインインを求められました" width="400" style="border: 1px solid #999"></p>
+<p align="center"><sub>図8：サインインは求めていないのに、求められたことにされる</sub></p>
+
+`Claude-User` は、最後まで一度も来ませんでした。正常な `server/discover` が待っているのに、呼ばれもしません。
+
+### server/discover だけ壊す
+
+今度は逆に、`server/discover` にだけ「そんなメソッドはない」と返すようにしました。
+
+すると、登録はすんなり通りました。「サインインなし」も、最初から自動で選ばれています。チャットでも、普通にメモを読み書きできました。ログを見ると、こうなっていました。
+
+| 時刻 (UTC) | 版 | メソッド | 返事 |
+|---|---|---|---|
+| 05:52:45 | 2026-07-28 | `server/discover`（id は `"server-discover-probe-1"`） | 404 |
+| 05:52:45 | （なし） | `initialize` | 200 |
+| 05:52:45 | 2025-11-25 | `notifications/initialized` | 202 |
+| 05:52:46 | 2025-11-25 | `tools/list` | 200 |
+| 05:52:46 | 2025-11-25 | `tools/call`（`write_note`） | 200 |
+| 05:52:50 | 2025-11-25 | `tools/call`（`read_note`） | 200 |
+
+claude.ai は、まず `server/discover` で新しい版を試して、だめなら `initialize` からの古い版に切り替えていました。`"server-discover-probe-1"` という id は、新しい版で話せるかの「お試し（probe）」だったようです。
+
+| 壊したもの | 登録 | 使えるか |
+|---|---|---|
+| `initialize` だけ | 確認で止まる（手動で追加はできる） | 使えない |
+| `server/discover` だけ | 通る（「サインインなし」も自動で選ばれる） | 使える（古い版で話す） |
+
+### Claude のドキュメントも見てみた
+
+念のため、Claude のコネクターのドキュメント（[Building connectors](https://claude.com/docs/connectors/building) まわり）も見てみました。2026-11-23 時点では、載っている MCP の版は 2025-11-25 までで、2026-07-28 も `server/discover` も出てきません。`initialize` のことは書いてあります。
+
+最新の版に沿ってここまで書いてきましたが、今の claude.ai の本命は、まだ古い版の `initialize` でした。てへ。
 
 ## まとめ：claude.ai に登録できる (remote) MCP サーバーに最低限要るもの
 
-<!-- TODO: 壊してみた結果を受けて書き直す -->
+2026-11-23 時点の claude.ai で試した結果です。
 
 プロトコルの要件
 
 - 1つの URL で POST を受けて、JSON-RPC で応える
-- `server/discover`：自分の名前、対応している版、機能を返す
+- 古い版の `initialize` に応えて、`notifications/initialized` を受け取る。これがないと、claude.ai は話しかけてこない
 - `tools/list`：ツールの一覧と、引数の形（JSON Schema）を返す
 - `tools/call`：ツールを実行して、結果を返す
-- 毎回のリクエストで、`_meta` の版とヘッダーを確かめる
+- `server/discover`：あれば、claude.ai は最新の版で話してくれる。なくても古い版で動く
 
 ネットワークの要件
 
