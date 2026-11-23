@@ -101,8 +101,6 @@ issuer にパスがなければ、どちらの決まりでも同じ場所なの�
 - DCR（Keycloak の Client Registration）を、トークンなしで受け付けるようにする
 - CIMD は有効にしない（有効にすると、前回の「おせっかい」で claude.ai は CIMD を選ぶはずなので）
 
-claude.ai は、初対面の認可サーバーに、何のトークンも持たずに「登録して」と頼んできます。Keycloak は、こうしたトークンなしの登録を受け付けはしますが、最初からいくつも関門を付けています。そのままだと claude.ai の登録は弾かれるので、関門を緩めます。どの関門をどう緩めたかは、実際に繋いでみた結果と一緒に、後で詳しく書きます。
-
 ### 公開する
 
 前回と同じく、MCP サーバーと認可サーバーを別々のトンネルで公開します。変わるのは、認可サーバー側の中身です。
@@ -142,14 +140,14 @@ make down     # 試し終わったら、トンネルごと止める
 <p align="center"><img src="images/toast-dcr-failed.drawio.png" alt="test のサインインサービスに登録できませんでした" width="360"></p>
 <p align="center"><sub>図5：claude.ai が Keycloak に自分を登録できなかった</sub></p>
 
-え、関門は緩めたはずなのに？ Keycloak のログを見ると、こう出ていました。
+え、なんで？ Keycloak のログを見ると、こう出ていました。
 
 ```
 Policy 'Allowed Client Scopes' rejected request to client-registration service.
 Requested scope 'openid' not trusted
 ```
 
-緩めておいたのとは、別の関門でした。関門、まだあったんかい。
+実は、Keycloak はトークンなしの登録に、最初からいくつも関門を付けています。そのうちの1つ（Trusted Hosts）は、手元で試したときに引っかかったので、事前に緩めておいたのですが、止められたのは別の関門でした。関門、まだあったんかい。
 
 ### Keycloak の、DCR 登録の関門
 
