@@ -152,7 +152,7 @@ make down     # 試し終わったら、トンネルごと止める
 
 チャットで「メモを書いて、それから一覧を見せて」と頼んでみました。
 
-<p align="center"><img src="images/chat-write-read.png" alt="claude.ai でメモを書いて一覧を見せてもらう" width="600" style="border: 1px solid #999"></p>
+<p align="center"><img src="images/chat-read-response.png" alt="claude.ai でメモを書いて一覧を見せてもらう" width="600" style="border: 1px solid #999"></p>
 <p align="center"><sub>図6：「メモを書く」「メモを読む」を順に使ってくれた。「メモを読む」のレスポンスでは、タイトルと本文が伏せられている</sub></p>
 
 画面には、ツール名の `write_note` ではなく「メモを書く」と出ていますね。`tools/list` で返した `title` が、そのまま表示に使われています。
