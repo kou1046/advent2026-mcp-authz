@@ -173,8 +173,8 @@ Keycloak は、anonymous の登録に、最初から「クライアント登録�
 
 Trusted Hosts は、「誰から来たか」と「どこへ戻すか」を確かめます。
 
-<p align="center"><img src="images/trusted-hosts-v6.drawio.svg" alt="Trusted Hosts は送り元を確かめず、戻り先が claude.ai かを確かめる" width="800"></p>
-<p align="center"><sub>図7：上が default、下が変更後。default では、送り元の IP を逆引きしても名前が出ないので弾かれる。変更後は送り元を確かめず（nginx に任せる）、戻り先が claude.ai なので通る</sub></p>
+<p align="center"><img src="images/trusted-hosts-v7.drawio.svg" alt="Trusted Hosts は送り元を確かめず、戻り先が claude.ai かを確かめる" width="800"></p>
+<p align="center"><sub>図7：Trusted Hosts の中には、送り元チェックと戻り先チェックの2つがある。default では送り元チェックで止まる。変更後は送り元チェックを外し、戻り先チェックだけにした</sub></p>
 
 | 確かめること | default | 変更後 |
 |---|---|---|
