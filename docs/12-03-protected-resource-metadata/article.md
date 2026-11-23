@@ -20,7 +20,8 @@ MCP サーバーが「認可が要る」と返したとき、claude.ai はどう
 
 前々回の流れを、おさらいしておきます。今回確かめるのは、このうちログイン画面の入口までです。
 
-<!-- TODO: 図1。401 → MCP サーバーのメタデータ → 認可サーバーのメタデータ → /authorize の流れ。Day 1 の図3 を流用するか描き直す -->
+<p align="center"><img src="images/recap.drawio.svg" alt="claude.ai がログイン画面の入口にたどり着くまで" width="800"></p>
+<p align="center"><sub>図1：401 から、MCP サーバーのメタデータ、認可サーバーのメタデータをたどって、ログイン画面の入口へ</sub></p>
 
 ### 401 と WWW-Authenticate
 
