@@ -204,7 +204,7 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 
 ### initialize だけ壊す
 
-古い版の `initialize` にだけ、「そんなメソッドはない」と返すようにしました。`server/discover` は、ちゃんと動いたままです。
+まずは `BREAK=no-initialize` で立ち上げて、コネクターを登録し直してみました。
 
 <!-- TODO: この2枚は initialize と server/discover を両方壊したときのもの（画面は同じ）。initialize だけ壊した版で撮り直すか、このままにするか。トーストの ofid_ は隠す -->
 
@@ -222,7 +222,7 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 
 ### server/discover だけ壊す
 
-今度は逆に、`server/discover` にだけ「そんなメソッドはない」と返すようにしました。HTTP のステータスは 404 で、本文は JSON-RPC のエラー（`-32601`）です。
+今度は逆に、`BREAK=no-discover` で試しました。`server/discover` には、HTTP のステータス 404 と、JSON-RPC のエラー（`-32601`）が返ります。
 
 すると、登録はすんなり通りました。「サインインなし」も、最初から自動で選ばれています。チャットでも、普通にメモを読み書きできました。ログを見ると、こうなっていました。
 
