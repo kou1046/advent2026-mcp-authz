@@ -86,10 +86,13 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 メタデータ（`GET /.well-known/oauth-protected-resource/mcp`）は、次のものを返します。
 
-```json
+```jsonc
 {
+  // このメタデータが説明している MCP サーバー（MCP の URL）
   "resource": "https://aaa.trycloudflare.com/mcp",
+  // トークンをもらいに行く認可サーバー。別のホストを指す
   "authorization_servers": ["https://bbb.trycloudflare.com"],
+  // トークンは Authorization ヘッダーで送る
   "bearer_methods_supported": ["header"]
 }
 ```
@@ -106,18 +109,27 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 `client_id` は確かめないので、どの登録の方式で来ても `/authorize` までは進めます。DCR と CIMD は、メタデータに書くかどうかを起動時に切り替えられるようにします。
 
-メタデータ（`GET /.well-known/oauth-authorization-server`）は、次のものを返します。`registration_endpoint` が DCR、`client_id_metadata_document_supported` が CIMD の広告です。
+メタデータ（`GET /.well-known/oauth-authorization-server`）は、次のものを返します。
 
-```json
+```jsonc
 {
+  // この認可サーバーの名前（URL）
   "issuer": "https://bbb.trycloudflare.com",
+  // ログイン画面の入口。ユーザーのブラウザが来る
   "authorization_endpoint": "https://bbb.trycloudflare.com/authorize",
+  // code をトークンに換える場所。今回はここまで来ない
   "token_endpoint": "https://bbb.trycloudflare.com/token",
+  // 登録の窓口。DCR に対応している、という広告（DCR=false で消える）
   "registration_endpoint": "https://bbb.trycloudflare.com/register",
+  // client_id に URL を使ってよい、という広告（CIMD=false で消える）
   "client_id_metadata_document_supported": true,
+  // 認可コードフローだけ
   "response_types_supported": ["code"],
+  // 認可コードとリフレッシュトークンで、トークンを出す
   "grant_types_supported": ["authorization_code", "refresh_token"],
+  // PKCE は S256
   "code_challenge_methods_supported": ["S256"],
+  // クライアントは秘密（client_secret）を持たない
   "token_endpoint_auth_methods_supported": ["none"]
 }
 ```
