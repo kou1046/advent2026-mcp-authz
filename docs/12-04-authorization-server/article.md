@@ -281,7 +281,7 @@ DCR は、連携のたびに登録し直すようです。設定の画面の「�
 
 「誰か」を確かめてトークンを渡すところまでは、OAuth と OpenID Connect で、もう十分に標準が揃っています。一方で、「このユーザーが、このメモを読んでいいか」のような細かい認可は、これまでアプリごとにバラバラに書くしかありませんでした。最近は、ここにも標準化の流れが来ています。判断を問い合わせる API の [AuthZEN Authorization API 1.0](https://openid.net/wg/authzen/) が 2026 年 1 月に正式な仕様になり、MCP のツール呼び出しを AuthZEN に当てはめる [COAZ](https://openid.net/getting-cozy-with-coaz-securing-apis-and-ai-agents-with-standardized-authorization/) も、ドラフトとして進んでいます。認可も、差し替えがきく世界になるなら待望ですね。この連載の後半で、実際に試してみます。
 
-### 手間がかかったのは、標準の外側だった
+### 標準どおりでも、設定のクセは残る
 
 標準どおりに話していても、製品ごとの「設定のクセ」は残ります。今回手間がかかったのは、まさにそこでした。Keycloak の default の設定に合わせるために、Trusted Hosts に止められ、Allowed Client Scopes に2回止められ、管理画面も外向けの URL でログインしに行ってエラーになりました。どれも、安全側に倒した default なので、Keycloak が悪いわけではありません。
 
