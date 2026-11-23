@@ -173,8 +173,8 @@ Keycloak は、anonymous の登録に、最初から「クライアント登録�
 
 Trusted Hosts は、「誰から来たか」と「どこへ戻すか」を確かめます。
 
-<p align="center"><img src="images/trusted-hosts-v3.drawio.svg" alt="Trusted Hosts は送り元を確かめず、戻り先が claude.ai かを確かめる" width="800"></p>
-<p align="center"><sub>図7：Anthropic の送り元の IP は逆引きできないので、Keycloak では送り元を確かめず、nginx の IP 制限に任せる。そのかわり、戻り先が claude.ai でなければ弾く（オレンジは claude.ai、灰色の点線は知らないクライアントの通り道）</sub></p>
+<p align="center"><img src="images/trusted-hosts-v4.drawio.svg" alt="Trusted Hosts は送り元を確かめず、戻り先が claude.ai かを確かめる" width="800"></p>
+<p align="center"><sub>図7：Anthropic の送り元の IP は逆引きできないので、Keycloak では送り元を確かめず、nginx の IP 制限に任せる。Anthropic の範囲の外から来た登録は、nginx で弾かれる。もし nginx をすり抜けても、戻り先が claude.ai でなければ Keycloak が弾く（オレンジは claude.ai、灰色の点線は知らないクライアントの通り道）</sub></p>
 
 | 確かめること | default | 変更後 |
 |---|---|---|
@@ -190,7 +190,7 @@ default では一覧が空っぽなので、誰から来ても弾かれます。
 
 なので、送り元は、範囲で書ける nginx の IP 制限に任せました。Keycloak に届く登録は、すでに Anthropic の範囲から来たものだけです。
 
-そのかわり、戻り先は `claude.ai` だけにしました。手元で、戻り先をよそのドメインにして登録してみると、ちゃんと 403 で弾かれました。「誰からの登録でも受け付けるが、戻り先は claude.ai だけ」という形です。
+そのかわり、戻り先は `claude.ai` だけにしました。手元で、nginx を通さずに Keycloak を直接叩き、戻り先をよそのドメインにして登録してみると、ちゃんと 403 で弾かれました。nginx の IP 制限が1段目、この戻り先の確かめが2段目、という守りです。「誰からの登録でも受け付けるが、戻り先は claude.ai だけ」という形です。
 
 #### Allowed Client Scopes：ここで弾かれた関門
 
