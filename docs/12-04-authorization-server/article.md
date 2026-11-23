@@ -164,8 +164,8 @@ claude.ai は、初対面の認可サーバーからトークンをもらって�
 
 Keycloak は、anonymous の登録に、最初から「クライアント登録ポリシー」をいくつも付けています。登録のリクエストが来ると、それを順に確かめて、1つでも引っかかればそこで止めます。今回関わったのは、そのうちの2つです。
 
-<p align="center"><img src="images/registration-gates-v4.drawio.svg" alt="claude.ai の登録が、Trusted Hosts と Allowed Client Scopes の2つの関門を通ってクライアントになる" width="800"></p>
-<p align="center"><sub>図6：claude.ai の登録は、Keycloak の2つの関門を通ってやっとクライアントになる。どちらも default のままだと弾かれる</sub></p>
+<p align="center"><img src="images/registration-gates-v5.drawio.svg" alt="Keycloak は、トークンなしの登録を anonymous として扱い、anonymous のポリシーを当てる" width="800"></p>
+<p align="center"><sub>図6：Keycloak は、トークンの付いていない登録を anonymous として扱い、anonymous 用のポリシー（Trusted Hosts、Allowed Client Scopes など）を当てる</sub></p>
 
 ほかにも、「登録されたクライアントは同意画面が必須」「登録できるのは 200 件まで」といったポリシーが付いていますが、今回は止められなかったので、そのままにしています。
 
