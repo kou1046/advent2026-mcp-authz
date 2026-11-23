@@ -1,5 +1,5 @@
 ---
-title: 最新の MCP 仕様の最小 MCP サーバーを自作して、claude.ai に繋いでみる
+title: 最新の MCP 仕様で最小のサーバーを自作して、claude.ai に繋いでみる
 tags: MCP JSON-RPC Go Claude
 ---
 
