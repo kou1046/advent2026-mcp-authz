@@ -94,7 +94,8 @@ issuer にパスがなければ、どちらの決まりでも同じ場所なの�
 
 前回の構成から、仮の認可サーバー（authserver）を Keycloak に置き換えます。MCP サーバーは、メタデータの `authorization_servers` を Keycloak の issuer に向けるだけで、コードは変えません。
 
-<!-- 図：作るもの（前回の図2の認可サーバーを Keycloak に） -->
+<p align="center"><img src="images/build.drawio.svg" alt="作成する MCP サーバーと認可サーバー（Keycloak）" width="800"></p>
+<p align="center"><sub>図3：作成するもの。前回の仮の認可サーバーを Keycloak に置き換える。claude.ai は DCR で自分を登録し、ユーザーを Keycloak のログイン画面に連れて行く</sub></p>
 
 #### Keycloak（新規）
 
@@ -126,7 +127,8 @@ Keycloak は、認証なしの DCR を最初から受け付けはしますが、
 - ユーザーのブラウザが来るのは、`/authorize` だけではなくなります。ログイン画面の CSS や JavaScript、ログインの送信も、ブラウザから来ます。<!-- TODO: nginx で誰でも通すパスを確かめる -->
 - 管理画面（`/admin`）は、外に出しません。
 
-<!-- 図：構成（前回の図3の認可サーバーを Keycloak に） -->
+<p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーと Keycloak までの構成" width="800"></p>
+<p align="center"><sub>図4：構成は前回と同じで、認可サーバーが Keycloak になった。nginx は、ログイン画面まわりだけ誰でも通し、管理画面は外に出さない</sub></p>
 
 ### 実際に作ったもの
 
