@@ -1,6 +1,6 @@
 # 12/3 MCP サーバーに 401 を返させて、claude.ai が認可サーバーを探す足取りを一歩ずつ確かめた
 
-記事：（公開したら追記）
+記事：https://qiita.com/kou1046/items/dcdedf12db7a88f255a7
 
 12/2 の MCP サーバーに、401 と Protected Resource Metadata（RFC 9728）を足しました。トークンの検証はまだしないので、MCP の URL へのリクエストはすべて 401 になります。その先は、仮の認可サーバー（`authserver`）が受けます。
 
