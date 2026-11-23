@@ -1,6 +1,6 @@
 # 12/4 手元で OSS の認可サーバーを立ててみたら、claude.ai の DCR とちょっと相性が悪かった件
 
-記事：（公開したら追記）
+記事：https://qiita.com/kou1046/items/e53ef45bdb4c8576ce09
 
 12/3 の仮の認可サーバーを、Keycloak に置き換えました。MCP サーバーのコードは変えず、メタデータの `authorization_servers` を Keycloak の realm に向けただけです。claude.ai は DCR で自分を登録して、Keycloak のログイン画面まで来ます。
 
