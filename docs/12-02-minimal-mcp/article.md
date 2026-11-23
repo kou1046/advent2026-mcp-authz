@@ -150,12 +150,12 @@ make down     # 試し終わったら、トンネルごと止める
 
 | 時刻 (UTC) | User-Agent | 版 | メソッド |
 |---|---|---|---|
-| 09:26:14 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
-| 09:26:18 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
-| 09:26:18 | Claude-User | 2026-07-28 | `server/discover` |
-| 09:26:18 | Claude-User | 2026-07-28 | `tools/list` |
-| 09:26:19 | Claude-User | 2026-07-28 | `server/discover` |
-| 09:26:19 | Claude-User | 2026-07-28 | `tools/list` |
+| 05:21:04 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
+| 05:21:09 | python-httpx/0.28.1 | 2025-11-25 | `initialize` |
+| 05:21:09 | Claude-User | 2026-07-28 | `server/discover` |
+| 05:21:10 | Claude-User | 2026-07-28 | `tools/list` |
+| 05:21:11 | Claude-User | 2026-07-28 | `server/discover` |
+| 05:21:11 | Claude-User | 2026-07-28 | `tools/list` |
 
 claude.ai は、もう新しい版で話しかけてきていました。`Claude-User` のリクエストは `server/discover` から始まっていて、`initialize` は使っていません。
 
@@ -165,24 +165,24 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 
 続いて、チャットで「メモを書いて、それから一覧を見せて」と頼んでみました。
 
-<!-- TODO: 中身を伏せる版でスクショ（chat-write-read.png）と下のログを撮り直す。今の画像は伏せる前のもの -->
-
 <p align="center"><img src="images/chat-write-read.png" alt="claude.ai でメモを書いて一覧を見せてもらう" width="600" style="border: 1px solid #999"></p>
-<p align="center"><sub>図6：「メモを書く」「メモを読む」を順に使って、書いたメモの一覧を返してくれた</sub></p>
+<p align="center"><sub>図6：「メモを書く」「メモを読む」を順に使ってくれたが、一覧の中身は伏せられている</sub></p>
 
 画面には、ツール名の `write_note` ではなく「メモを書く」と出ていますね。`tools/list` で返した `title` が、そのまま表示に使われています。
 
 | 時刻 (UTC) | メソッド | JSON-RPC の id |
 |---|---|---|
-| 09:28:22 | `server/discover` | `987823046` |
-| 09:28:25 | `server/discover` | `"server-discover-probe-1"` |
-| 09:28:25 | `tools/list` | `0` |
-| 09:28:26 | `tools/call`（`write_note`） | `1` |
-| 09:28:30 | `tools/call`（`read_note`） | `2` |
+| 05:21:35 | `server/discover` | `366981048` |
+| 05:21:39 | `server/discover` | `"server-discover-probe-1"` |
+| 05:21:39 | `tools/list` | `0` |
+| 05:21:39 | `tools/call`（`write_note`） | `1` |
+| 05:21:43 | `tools/call`（`read_note`） | `2` |
 
 `server/discover` で確かめて、`tools/list` で一覧を取って、`tools/call` で呼ぶ。さっきの3つのメソッドが、そのまま順に使われています。
 
-書き込まれたメモの `owner` は `anonymous` です。認可がないので、誰が書いたのかはサーバーにはわかりません。だから、自分で書いたばかりのメモでも、中身は伏せられています。
+一覧のタイトルと本文は、ちゃんと伏せられています。「書いたメモ」の欄に中身が出ているのは、Claude が自分で送った内容を覚えているだけで、サーバーから返ってきたものではありません。
+
+一覧には、Claude が書いた `n2` のほかに、`n1` も並んでいます。これは、その少し前に手元から curl で書いたメモです。どちらも `owner` は `anonymous` で、Claude も「`n1` は私が書いたものではない」としか言えていません。認可がないので、誰が書いたのかはサーバーにもわからないわけですね。
 
 ## 壊してみる
 
