@@ -18,7 +18,7 @@ claude.ai が探しに来た認可サーバーは、何を返せばいいので�
 
 仕様：[RFC 8414](https://www.rfc-editor.org/rfc/rfc8414)、[MCP 2026-07-28 Authorization](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization)
 
-<p align="center"><img src="images/as-metadata-v8.drawio.svg" alt="認可サーバーの窓口と、その場所が書かれたメタデータ" width="800"></p>
+<p align="center"><img src="images/as-metadata-v9.drawio.svg" alt="認可サーバーの窓口と、その場所が書かれたメタデータ" width="800"></p>
 <p align="center"><sub>図1：認可サーバーには窓口がいくつかあり、その場所はメタデータ（案内板）に書いてある。今回は ①〜③ まで</sub></p>
 
 前回の仮の認可サーバーが返していたメタデータを、もう一度見てみましょう。claude.ai が使っていたのは、このうち次のあたりです。
@@ -94,7 +94,7 @@ issuer にパスがなければ、どちらの決まりでも同じ場所なの�
 
 前回の構成から、仮の認可サーバー（authserver）を Keycloak に置き換えます。MCP サーバーは、メタデータの `authorization_servers` を Keycloak の issuer に向けるだけで、コードは変えません。
 
-<p align="center"><img src="images/build.drawio.svg" alt="作成する MCP サーバーと認可サーバー（Keycloak）" width="800"></p>
+<p align="center"><img src="images/build-v2.drawio.svg" alt="作成する MCP サーバーと認可サーバー（Keycloak）" width="800"></p>
 <p align="center"><sub>図3：作成するもの。前回の仮の認可サーバーを Keycloak に置き換える。claude.ai は DCR で自分を登録し、ユーザーを Keycloak のログイン画面に連れて行く</sub></p>
 
 #### Keycloak（新規）
