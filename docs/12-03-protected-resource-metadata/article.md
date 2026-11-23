@@ -1,8 +1,7 @@
 ---
-title: MCP サーバーに「認可が要る」と言わせたら、claude.ai はどこへ探しに行くのか
+title: MCP サーバーに 401 を返させて、claude.ai が認可サーバーを探す足取りを一歩ずつ確かめた
 tags: MCP OAuth Claude
 ---
-<!-- TODO: タイトルは仮 -->
 
 ## 今日の問い
 
