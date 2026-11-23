@@ -14,6 +14,10 @@ import (
 // 認可がまだないので、誰が書いても同じ owner になる。
 const anonymous = "anonymous"
 
+// 誰でも書ける場所に出すので、他人の書いた中身を別の人の LLM に返さない
+// （プロンプトインジェクションの持ち込み口にしない）。認可を入れるまでは全部伏せる。
+const masked = "（認可がないので伏せています）"
+
 const (
 	maxTitle = 100
 	maxBody  = 2000
@@ -45,7 +49,7 @@ func (s *server) toolDefs() []map[string]any {
 		{
 			"name":        "read_note",
 			"title":       "メモを読む",
-			"description": "メモを読む。id を渡すとその1件、省略すると一覧を返す。",
+			"description": "メモを読む。id を渡すとその1件、省略すると一覧を返す。認可がまだないので、タイトルと本文は伏せて返す。",
 			"inputSchema": rs,
 			"annotations": map[string]any{"readOnlyHint": true},
 		},
@@ -81,6 +85,9 @@ func (s *server) callTool(ctx context.Context, p params) (map[string]any, *rpcEr
 			if err != nil {
 				return nil, internal(err)
 			}
+			for i := range list {
+				list[i] = mask(list[i])
+			}
 			return toolResult(map[string]any{"notes": list}), nil
 		}
 		n, err := s.store.Get(ctx, in.ID)
@@ -90,7 +97,7 @@ func (s *server) callTool(ctx context.Context, p params) (map[string]any, *rpcEr
 		if err != nil {
 			return nil, internal(err)
 		}
-		return toolResult(n), nil
+		return toolResult(mask(n)), nil
 
 	case "write_note":
 		var in struct {
@@ -112,9 +119,14 @@ func (s *server) callTool(ctx context.Context, p params) (map[string]any, *rpcEr
 		if err != nil {
 			return nil, internal(err)
 		}
-		return toolResult(n), nil
+		return toolResult(mask(n)), nil
 	}
 	return nil, &rpcError{Code: codeInvalidParams, Message: "Unknown tool: " + p.Name}
+}
+
+func mask(n notes.Note) notes.Note {
+	n.Title, n.Body = masked, masked
+	return n
 }
 
 // toolResult は構造化した結果と、同じ中身の JSON テキストを両方返す。
