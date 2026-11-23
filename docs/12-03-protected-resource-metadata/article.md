@@ -155,11 +155,13 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 - https://github.com/kou1046/advent2026-mcp-authz/tree/main/days/12-03-protected-resource-metadata
 
+Docker と make があれば、手元で試せます。`make tunnel` が表示する URL を claude.ai のカスタムコネクターに登録すると、ブラウザが仮の認可サーバーの「ここまで来ました」まで連れて行かれます。
+
 ```sh
-make tunnel             # MCP サーバー・仮の認可サーバー・nginx・cloudflared（2本）を立ち上げる
+make tunnel             # MCP サーバー・仮の認可サーバー・nginx・cloudflared（2本）を立ち上げて、登録する URL を表示する
 make tunnel CIMD=false  # 仮の認可サーバーが CIMD を広告しないようにする（DCR=false も同じ）
-make logs
-make down
+make logs               # 届いたリクエストのログを見る
+make down               # 試し終わったら、トンネルごと止める
 ```
 
 ## claude.ai から繋いでみる
