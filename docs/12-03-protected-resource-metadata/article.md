@@ -262,7 +262,7 @@ CIMD と DCR のどちらにするかを claude.ai が認可サーバーを見�
 
 Claude の[ドキュメント](https://claude.com/docs/connectors/building/authentication)には、認可サーバーが CIMD に対応していれば CIMD、そうでなければ DCR に落ちる、と書いてあります。ただ、画面で別の方式を選んだらどうなるかは、[コネクターの追加のページ](https://claude.com/docs/connectors/custom/add-unlisted)にも「『検出済み』はそのままにしておいて」とあるだけで、選択が上書きされるとはどこにも書いていませんでした。
 
-<!-- TODO -->
+もう1つは、ユーザーを `/authorize` へ連れて行く方法です。OAuth の説明でよく見るのは 302 のリダイレクトなので、それしか手段はないものだと思っていました。でも、claude.ai は JavaScript で画面を移動させていました。OAuth の仕様が決めているのは「ブラウザを `/authorize` へ向かわせる」ことだけで、手段は自由です。ほかの MCP クライアントはどうやっているのか、気になります。
 
 ## まとめ
 
