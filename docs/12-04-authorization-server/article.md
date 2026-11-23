@@ -221,6 +221,17 @@ anonymous の登録で頼めるスコープを、案内板の `scopes_supported`
 
 ただ、これは許すほうに寄せた直し方です。どこから来たかわからないクライアントでも、`service_account` や `offline_access`（リフレッシュトークン）を自分に割り当てられるようになりました。今回は戻り先を claude.ai だけに絞っているので、大きな問題はありません。本番なら逆に、案内板から要らないスコープを外す（`scopes_supported` を絞る）ほうが筋だと思います。
 
+後から [Claude のドキュメント](https://claude.com/docs/connectors/building/authentication)を読むと、claude.ai が頼むスコープは、本来は MCP サーバーの側で決められるようでした。
+
+> To control which scopes Claude requests, include a `scope` parameter in the `WWW-Authenticate` header on your `401` response. If you don't, Claude requests the scopes your protected resource metadata advertises in `scopes_supported`.
+
+401 の `WWW-Authenticate` に `scope` を付けるか、MCP サーバーのメタデータに `scopes_supported` を書けば、それを頼む、ということです。今回の MCP サーバーは、どちらも書いていませんでした。その場合にどうするかはドキュメントに書いておらず、実際には認可サーバーの案内板のスコープを全部頼んできました。MCP サーバーの側で要るスコープだけを書いておけば、`openid` や `service_account` は頼まれず、そもそもここで詰まらなかったはずです。こっちのほうが筋がいい直し方ですね。
+
+> [!NOTE]
+> 同じところで詰まっている人もいる
+>
+> Keycloak と MCP の DCR の組み合わせで、同じ関門に止められている人もいるようです。claude.ai などの MCP クライアントが `openid` を頼んできて、Keycloak の default のポリシーに弾かれる話は [AKB のドキュメント](https://raw.githubusercontent.com/dnotitia/akb/main/docs/mcp-clients/web-connectors.md)に、VS Code の登録が Trusted Hosts に弾かれる話は [Phase Two の記事](https://phasetwo.io/blog/instant-mcp-authorization-keycloak/)にありました。
+
 ### 届いたリクエストを見てみる
 
 | 届いた順 | 誰が | どこへ | 返したもの |
