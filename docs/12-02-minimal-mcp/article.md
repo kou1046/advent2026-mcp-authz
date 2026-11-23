@@ -1,5 +1,5 @@
 ---
-title: 最新の MCP 仕様で最小のサーバーを自作したら、claude.ai はまだ initialize を待っていた
+title: claude.ai に登録できる MCP サーバーに最低限要るものを、壊しながら確かめた
 tags: MCP JSON-RPC Claude
 ---
 
