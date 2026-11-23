@@ -121,7 +121,7 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 ### 公開する
 
 <p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="800"></p>
-<p align="center"><sub>図5：claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー</sub></p>
+<p align="center"><sub>図5：トンネルの URL を claude.ai に登録すると、Cloudflare → cloudflared → nginx を通って手元の MCP サーバーに届く</sub></p>
 
 ネットワークの要件を満たすために、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。`https://….trycloudflare.com` の URL がもらえて、IPv4 でも届きます。
 
