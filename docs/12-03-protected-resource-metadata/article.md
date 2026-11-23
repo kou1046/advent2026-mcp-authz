@@ -67,7 +67,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 - MCP の URL へのリクエストには、401 と `WWW-Authenticate` を返す
 - `/.well-known/oauth-protected-resource` で、メタデータを返す。`authorization_servers` には、別のホストで動かす認可サーバーの URL を書く
 
-「トークン」は、`Authorization: Bearer …` ヘッダーで送られてくるものです。ただ、トークンの検証はまだしないので、付いていようがいまいが、全部 401 です。違うのは `WWW-Authenticate` の中身だけです。
+「トークン」は、`Authorization: Bearer …` ヘッダーで送られてくるものです。ただ、トークンの検証はまだしないので、付いていてもいなくても 401 にします。違うのは `WWW-Authenticate` の中身だけです。
 
 | リクエスト | 返すもの |
 |---|---|
@@ -98,7 +98,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 |---|---|
 | `/.well-known/oauth-authorization-server`（GET） | 200、認可サーバーのメタデータ。`/authorize` の場所や、対応している登録の方式（DCR、CIMD）を書く |
 | `/register`（POST） | 201、送られてきた内容に `client_id` を付けて返す（DCR）。何も保存しない |
-| `/authorize`（GET） | 200、「ここまで来ました」とだけ表示する |
+| `/authorize`（GET） | 200、「到達しました」とだけ表示する |
 
 `client_id` は確かめないので、どの登録の方式で来ても `/authorize` までは進めます。DCR と CIMD は、メタデータに書くかどうかを起動時に切り替えられるようにします。
 
@@ -149,7 +149,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 | 認可サーバーのメタデータ、`/register` | claude.ai（Anthropic のサーバー） | あり |
 | `/authorize`（ログイン画面の入口） | ユーザーのブラウザ | なし |
 
-ログイン画面は、ユーザー本人が見て操作するものです。なので claude.ai は、`/authorize` だけは自分で取りに行かず、ユーザーのブラウザをそこへ送り出します。前回と同じく claude.ai の IP だけを通していると、ユーザーのブラウザが門前払いされてしまうので、`/authorize` だけは制限を外しています。今回の中身は「ここまで来ました」の文字だけです。
+ログイン画面は、ユーザー本人が見て操作するものです。なので claude.ai は、`/authorize` だけは自分で取りに行かず、ユーザーのブラウザをそこへ送り出します。前回と同じく claude.ai の IP だけを通していると、ユーザーのブラウザが門前払いされてしまうので、`/authorize` だけは制限を外しています。今回の中身は「到達しました」の文字だけです。
 
 ### 実際に作ったもの
 
@@ -186,7 +186,7 @@ URL を入れると、claude.ai はサーバーを3段階で確かめて、「�
 
 ### 届いたリクエストを見てみる
 
-ダイアログの3段階は、claude.ai から届いた3つのリクエストに、そのまま対応していました。
+ダイアログの3段階は、claude.ai から届いた3つのリクエストに、ぴったり対応していました。
 
 | 届いた順 | 誰が | どこへ | 返したもの | ダイアログの表示 |
 |---|---|---|---|---|
@@ -195,7 +195,7 @@ URL を入れると、claude.ai はサーバーを3段階で確かめて、「�
 | 3 | claude.ai | 認可サーバー：`GET /.well-known/oauth-authorization-server` | 200 | サインインプロバイダーを確認しています |
 | 4 | ユーザー（ブラウザ） | 認可サーバー：`GET /authorize?…` | 200 | （「追加」を押した後） |
 
-最初に届くのは、前回見た確認する係の、古い版の `initialize` です。今回はそこに 401 を返したので、その先へ進みました。
+最初に届いたのは、前回もいた「確認する係」の、古い版の `initialize` でした。また君か、という感じです。今回はそこに 401 を返したので、その先へ進みました。
 
 「追加」を押したときにも、1〜3 をもう一度たどってから、4 に進みました。「検出済み」は、この 1 の 401 と、3 のメタデータを見て付けたものです。
 
@@ -222,7 +222,7 @@ URL を入れると、claude.ai はサーバーを3段階で確かめて、「�
 }
 ```
 
-画面は、この `auth_url` へ、JavaScript で同じタブのまま移動します。てっきり 302 のリダイレクトだと思っていたのですが、ハズレでした。claude.ai のサーバーが URL を組み立て、画面がブラウザを移動させる、という分担です。
+画面は、この `auth_url` へ、JavaScript で同じタブのまま移動します。てっきり 302 のリダイレクトだと思っていたのですが、ハズレでした。URL を組み立てるのは claude.ai のサーバー、ブラウザを動かすのは画面、と役割を分けているんですね。
 
 `auth_url` に付いていたものは、次のとおりです。
 
@@ -235,7 +235,7 @@ URL を入れると、claude.ai はサーバーを3段階で確かめて、「�
 | `state` | `…` | 戻ってきたときに、自分が始めたものか照らし合わせる |
 | `resource` | `https://aaa.trycloudflare.com/mcp` | どの MCP サーバー宛てのトークンが欲しいか（RFC 8707） |
 
-PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、fetch の返事に入っていません。claude.ai のサーバーが持ったままです。ブラウザを通るのは、見られても困らない値だけです。なるほど、うまく分けてあります。
+PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、fetch の返事に入っていません。claude.ai のサーバーが持ったままで、ブラウザを通るのは、見られても困らない値だけです。なるほど、うまく分けてあります。
 
 ## 登録の方式を変えてみる
 
@@ -250,9 +250,9 @@ PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、
 | CIMD と DCR | 自動的に登録 | CIMD | 同上 |
 | DCR だけ | 自動的に登録（既定） | DCR | `authserver-7d22…`（`/register` で払い出したもの） |
 | DCR だけ | Claude の公開アイデンティティ | DCR | `authserver-0f76…` |
-| DCR だけ | 独自の OAuth クライアント | 事前登録（静的） | `my-client`（入力したもの） |
+| DCR だけ | 独自の OAuth クライアント | 静的登録 | `my-client`（入力したもの） |
 
-「自動的に登録」（DCR）を選んでも、認可サーバーが CIMD を広告していれば CIMD で来ました。逆に、CIMD を広告していないと、「Claude の公開アイデンティティ」を選んでも DCR で来ました。しかも、エラーも警告も出ません。しれっと変わります。設定の画面でこっちが何を選ぼうが、CIMD と DCR のどちらになるかを決めるのは、認可サーバーの広告のようです。「独自の OAuth クライアント」だけは選んだとおりで、`/register` は来ず、入力した `client_id` で `/authorize` に来ました。
+「自動的に登録」（DCR）を選んでも、認可サーバーが CIMD を広告していれば CIMD で来ました。逆に、CIMD を広告していないと、「Claude の公開アイデンティティ」を選んでも DCR で来ました。しかも、エラーも警告も出ません。しれっと変わります。設定の画面でこっちが何を選ぼうが、CIMD と DCR のどちらになるかを決めるのは、認可サーバーの広告のようです。「独自の OAuth クライアント」（静的登録）だけは選んだとおりで、`/register` は来ず、入力した `client_id` で `/authorize` に来ました。
 
 `CIMD=false` にすると、設定の画面の「検出済み」も「自動的に登録」に移り、既定の選択も DCR になりました。
 
@@ -262,7 +262,7 @@ PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、
 
 CIMD と DCR のどちらにするかを claude.ai が認可サーバーを見て決めてくれるなら、コネクターの設定の画面で選ばせなくてもよくね？と思いました。選んでも効かない選択肢なんて、迷うだけです。意味があるのは、「独自の OAuth クライアント」を使うかどうかだけでした。
 
-Claude の[ドキュメント](https://claude.com/docs/connectors/building/authentication)には、認可サーバーが CIMD に対応していれば CIMD、そうでなければ DCR に落ちる、と書いてあります。ただ、設定の画面で別の方式を選んだらどうなるかは、[コネクターの追加のページ](https://claude.com/docs/connectors/custom/add-unlisted)にも「『検出済み』はそのままにしておいて」とあるだけで、選択が上書きされるとはどこにも書いていませんでした。
+Claude の[ドキュメント](https://claude.com/docs/connectors/building/authentication)には、認可サーバーが CIMD に対応していれば CIMD、そうでなければ DCR に落ちる、と書いてあります。ただ、設定の画面で別の方式を選んだらどうなるかは、[コネクターの追加のページ](https://claude.com/docs/connectors/custom/add-unlisted)にも「『検出済み』はそのままにしておいて」とあるだけで、選択が上書きされるとは、どこにも書いていませんでした。一言ほしかったです。
 
 ### ユーザーを /authorize へ連れて行く方法は、302 だけじゃない
 
