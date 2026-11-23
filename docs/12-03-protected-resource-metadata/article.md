@@ -84,7 +84,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 `initialize` でも `server/discover` でも `tools/call` でも、メソッドを問わず同じです。通知（`notifications/…`）も 401 になります。
 
-メタデータは、次のものを返します。
+メタデータ（`GET /.well-known/oauth-protected-resource/mcp`）は、次のものを返します。
 
 ```json
 {
@@ -106,7 +106,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 `client_id` は確かめないので、どの登録の方式で来ても `/authorize` までは進めます。DCR と CIMD は、メタデータに書くかどうかを起動時に切り替えられるようにします。
 
-メタデータは、次のものを返します。`registration_endpoint` が DCR、`client_id_metadata_document_supported` が CIMD の広告です。
+メタデータ（`GET /.well-known/oauth-authorization-server`）は、次のものを返します。`registration_endpoint` が DCR、`client_id_metadata_document_supported` が CIMD の広告です。
 
 ```json
 {
