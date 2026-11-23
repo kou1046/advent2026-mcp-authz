@@ -58,11 +58,17 @@ Keycloak がメタデータを置いているのは、3 です。なので、cla
 
 #### Keycloak（新規）
 
-<!-- TODO: realm 名、ダミーユーザー（まず1人）、有効にする機能（CIMD は実験的機能 --features=cimd） -->
+ログイン画面を出すには、Keycloak が claude.ai をクライアントとして知っている必要があります。知らない `client_id` で来られても、Keycloak はログイン画面ではなくエラーを返すからです。
 
-<!-- TODO: ログイン画面まで来させるには、claude.ai を何らかの形でクライアントとして知っている必要がある。CIMD を有効にすれば事前登録なしでログイン画面まで行けるか？ DCR を有効にするか？ 事前登録は次回なので、今回はどれで通すか決める -->
+今回は、claude.ai に DCR で自分を登録させます。前回は仮の認可サーバーだったので、`/register` に何が届いたかしか見られませんでした。今回は、Keycloak のクライアント一覧に、claude.ai が本当に登録されたことまで確かめます。
 
-<!-- TODO: claude.ai が CIMD を選ぶには、token_endpoint_auth_methods_supported に none が要る（前回の発見と公式ドキュメント）。Keycloak のメタデータに none が入っているか要確認。入っていなければ DCR に落ちるはず -->
+- realm を1つ作り、ダミーユーザーを1人置く
+- DCR（Keycloak の Client Registration）を、認証なしで受け付けるようにする
+- CIMD は有効にしない（有効にすると、前回の「おせっかい」で claude.ai は CIMD を選ぶはずなので）
+
+<!-- TODO: realm 名。Keycloak の匿名の DCR は、クライアント登録ポリシー（Trusted Hosts など）で制限がかかっている。claude.ai から登録できるように、どこを緩めるか要確認。緩めすぎない -->
+
+<!-- TODO: Keycloak のメタデータの registration_endpoint の場所（/realms/<realm 名>/clients-registrations/openid-connect のはず）。token_endpoint_auth_methods_supported に none があるかも、念のため見る -->
 
 ### 公開する
 
@@ -86,9 +92,13 @@ Keycloak がメタデータを置いているのは、3 です。なので、cla
 
 <!-- TODO: 実測。well-known の 404 が並ぶか（1 → 2 → 3 の順か）、ほかに何を叩くか -->
 
+### claude.ai は登録されたのか
+
+<!-- TODO: 実測。/register（clients-registrations）に届いた中身と返事。Keycloak の管理画面のクライアント一覧に、claude.ai（client_name Claude）が増えているスクショ。連携し直すと、もう1つ増えるか -->
+
 ### ログイン画面
 
-<!-- TODO: 実測。Keycloak のログイン画面のスクショ（client_id がどう表示されるか）。CIMD なら Keycloak は client_id の URL を取りに行くはず（Keycloak 側のログ） -->
+<!-- TODO: 実測。Keycloak のログイン画面のスクショ（アドレスバーの client_id が、登録で払い出されたものになっているか） -->
 
 ## 感想
 
