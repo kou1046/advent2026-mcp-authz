@@ -8,6 +8,8 @@ SDK を使わずに JSON-RPC を直接書いた、最小の MCP サーバーで�
 - 認可はありません。誰が書いても `owner` は `anonymous` です。
 - 認可なしで公開するので、書かれたタイトルと本文は捨てて、伏せた文言に置き換えて保存します。
 
+<p align="center"><img src="../../docs/12-02-minimal-mcp/images/masking.drawio.svg" alt="作成する MCP サーバー" width="800"></p>
+
 ## 動かす
 
 Docker と make が要ります。
@@ -29,9 +31,7 @@ make smoke    # curl で一通り叩く
 
 ## 構成
 
-```
-claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー
-```
+<p align="center"><img src="../../docs/12-02-minimal-mcp/images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="800"></p>
 
 - cloudflared：quick tunnel で一時的な `https://….trycloudflare.com` の URL を出す
 - nginx：Anthropic が繋ぎに来る IP の範囲（[公開されている範囲](https://platform.claude.com/docs/en/api/ip-addresses)）だけを通す
@@ -42,6 +42,20 @@ claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー
 | `cmd/mcp/` | MCP サーバー本体（`main.go`：HTTP、`rpc.go`：JSON-RPC と新旧の版、`tools.go`：ツール） |
 | `internal/notes/` | メモの保存（メモリ） |
 | `deploy/local/` | Docker Compose、nginx の設定、smoke テスト |
+
+## プロトコル
+
+MCP のメッセージは JSON-RPC 2.0 です。リクエストには同じ `id` でレスポンスを返し、通知には返事をしません（HTTP では 202）。
+
+<p align="center"><img src="../../docs/12-02-minimal-mcp/images/jsonrpc.drawio.svg" alt="JSON-RPC のリクエスト・レスポンスと通知" width="800"></p>
+
+2025-11-25 までは、最初に `initialize` で決めたことを、サーバーがセッションとして覚えていました。
+
+<p align="center"><img src="../../docs/12-02-minimal-mcp/images/initialize.drawio.svg" alt="以前の流れ：initialize で挨拶してから、セッション ID を付けてツールを呼ぶ" width="800"></p>
+
+2026-07-28 からは、毎回のリクエストの `_meta` でバージョンと機能を送るので、サーバーは何も覚えません。このサーバーは両方に応えます。
+
+<p align="center"><img src="../../docs/12-02-minimal-mcp/images/meta.drawio.svg" alt="最新の流れ：毎回のリクエストの _meta に版と機能を載せる" width="800"></p>
 
 ## 壊してみる
 
