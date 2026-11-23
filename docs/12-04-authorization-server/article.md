@@ -18,8 +18,8 @@ claude.ai が探しに来た認可サーバーは、何を返せばいいので�
 
 仕様：[RFC 8414](https://www.rfc-editor.org/rfc/rfc8414)、[MCP 2026-07-28 Authorization](https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization)
 
-<p align="center"><img src="images/as-metadata-v5.drawio.svg" alt="認可サーバーの窓口と、その場所が書かれたメタデータ" width="800"></p>
-<p align="center"><sub>図1：認可サーバーには窓口がいくつかあり、その場所はメタデータ（案内板）に書いてある。今回は ①〜③ まで</sub></p>
+<p align="center"><img src="images/as-metadata-v6.drawio.svg" alt="認可サーバーの窓口と、その場所が書かれたメタデータ" width="800"></p>
+<p align="center"><sub>図1：認可サーバーには窓口がいくつかあり、その場所はメタデータ（案内板）に書いてある。今回は ①〜④ まで</sub></p>
 
 前回の仮の認可サーバーが返していたメタデータを、もう一度見てみましょう。claude.ai が使っていたのは、このうち次のあたりです。
 
