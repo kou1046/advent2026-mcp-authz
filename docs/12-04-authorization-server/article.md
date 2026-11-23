@@ -173,7 +173,7 @@ Keycloak は、anonymous の登録に、最初から「クライアント登録�
 
 Trusted Hosts は、「誰から来たか」と「どこへ戻すか」を確かめます。
 
-<p align="center"><img src="images/trusted-hosts-v4.drawio.svg" alt="Trusted Hosts は送り元を確かめず、戻り先が claude.ai かを確かめる" width="800"></p>
+<p align="center"><img src="images/trusted-hosts-v5.drawio.svg" alt="Trusted Hosts は送り元を確かめず、戻り先が claude.ai かを確かめる" width="800"></p>
 <p align="center"><sub>図7：Anthropic の送り元の IP は逆引きできないので、Keycloak では送り元を確かめず、nginx の IP 制限に任せる。Anthropic の範囲の外から来た登録は、nginx で弾かれる。もし nginx をすり抜けても、戻り先が claude.ai でなければ Keycloak が弾く（オレンジは claude.ai、灰色の点線は知らないクライアントの通り道）</sub></p>
 
 | 確かめること | default | 変更後 |
