@@ -246,6 +246,9 @@ PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、
 
 「OAuth クライアント」の選び方と、仮の認可サーバーの広告（`CIMD=false`）を変えながら、何通りか登録してみました。
 
+<p align="center"><img src="images/registration.drawio.svg" alt="claude.ai は、ユーザーの選択よりも認可サーバーの対応を見て、CIMD と DCR を選ぶ" width="800"></p>
+<p align="center"><sub>図7：claude.ai は、画面で選んだ方式よりも、認可サーバーのメタデータを見て CIMD と DCR を選ぶ</sub></p>
+
 | 認可サーバーの広告 | claude.ai で選んだもの | 実際に使われたもの | `client_id` |
 |---|---|---|---|
 | CIMD と DCR | Claude の公開アイデンティティ（既定） | CIMD | `https://claude.ai/oauth/mcp-oauth-client-metadata` |
