@@ -36,7 +36,7 @@ Keycloak も、もちろんこのメタデータを返します。ただ、前�
 
 前回の仮の認可サーバーの issuer は `https://bbb.trycloudflare.com` で、パスがありませんでした。なので、メタデータは素直に `/.well-known/oauth-authorization-server` に置けばよかったのです。
 
-Keycloak の issuer は、`https://bbb.trycloudflare.com/realms/<realm 名>` のように、パスが入ります。こうなると、メタデータの置き場所の候補が増えます。MCP の仕様は、issuer にパスがあるとき、クライアントに次の順で探すよう求めています。
+Keycloak の issuer は、`https://bbb.trycloudflare.com/realms/<realm 名>` のように、パスが入ります。realm は、Keycloak でユーザーやクライアントをまとめておく単位です。今回は `mcp` という realm を1つ作ります。こうなると、メタデータの置き場所の候補が増えます。MCP の仕様は、issuer にパスがあるとき、クライアントに次の順で探すよう求めています。
 
 | 順 | 置き場所 | 決まりの出どころ |
 |---|---|---|
@@ -62,6 +62,12 @@ Keycloak の issuer は、`https://bbb.trycloudflare.com/realms/<realm 名>` の
 <!-- 図：作るもの（前回の図2の認可サーバーを Keycloak に） -->
 
 #### Keycloak（新規）
+
+認可サーバーには、[Keycloak](https://www.keycloak.org/) を使います。オープンソースの認証・認可サーバーで、OAuth 2.0 や OpenID Connect をひととおり話せます。ログイン画面やユーザー管理まで込みで、Docker ですぐ立てられます。
+
+Keycloak には、[MCP との連携ガイド](https://www.keycloak.org/securing-apps/mcp-authz-server)まであります。DCR は正式に対応していて、CIMD と resource indicators（RFC 8707）は実験的な機能として対応しています。この先の回で使う token exchange（RFC 8693）も、[26.2 から正式に対応](https://www.keycloak.org/2025/05/standard-token-exchange-kc-26-2)しました（どれも 2026-11 時点）。
+
+ほかにも、ログイン画面を自分で用意する前提の [Ory Hydra](https://github.com/ory/hydra) や、[ZITADEL](https://zitadel.com/)、[authentik](https://goauthentik.io/) などの選択肢があります。この連載で使う機能がひととおり揃っていて、MCP 向けの公式ガイドまであるので、Keycloak にしました。
 
 ログイン画面を出すには、Keycloak が claude.ai をクライアントとして知っている必要があります。知らない `client_id` で来られても、Keycloak はログイン画面ではなくエラーを返すからです。
 
