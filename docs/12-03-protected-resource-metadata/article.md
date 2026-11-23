@@ -266,7 +266,7 @@ Claude の[ドキュメント](https://claude.com/docs/connectors/building/authe
 
 ### /authorize へ連れて行く方法は、302 だけじゃない
 
-クライアントのサーバーから、ユーザーのブラウザを `/authorize` へ連れて行くには、OAuth の説明でよく見る 302 のリダイレクトしかないと思っていました。でも claude.ai は、サーバーは URL を返すだけで、移動は画面の JavaScript に任せていました。OAuth の仕様が決めているのは「ブラウザを `/authorize` へ向かわせる」ことだけで、手段は自由です。ほかの MCP クライアントはどうやっているのか、気になります。
+クライアントのサーバーから、ユーザーのブラウザを `/authorize` へ連れて行くには、OAuth の説明でよく見る 302 のリダイレクトしかないと思っていました。でも claude.ai は、サーバーは URL を返すだけで、移動は画面の JavaScript に任せていました。OAuth の仕様が決めているのは「ブラウザを `/authorize` へ向かわせる」ことだけで、手段は自由です。ChatGPT や Gemini など、ほかの MCP クライアントはどうやっているのか、気になります。
 
 ## まとめ
 
