@@ -159,7 +159,7 @@ make down     # 試し終わったら、トンネルごと止める
 
 claude.ai は、もう新しい版で話しかけてきていました。`Claude-User` のリクエストは `server/discover` から始まっていて、`initialize` は使っていません。
 
-ただ、その前に、別の User-Agent（`python-httpx`）から古い版の `initialize` も届いています。送ったきりで続きがないので、登録のときの疎通確認なのかな、と思っていますが、確かめたわけではありません。このサーバーは新旧どちらの版にも応えるようにしてあるので、こちらにも返事ができています（あとで書きます）。
+ただ、その前に、別の User-Agent（`python-httpx`）から古い版の `initialize` も届いています。送ったきりで続きがないので、登録のときの疎通確認なのかな、と思っていますが、確かめたわけではありません。このサーバーは、`_meta` にバージョンが載っていれば新しい版、載っていなければ古い版として処理するようにしてあるので、こちらにも返事ができています。
 
 ### ツールを使わせてみる
 
@@ -184,60 +184,6 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 
 書き込まれたメモの `owner` は `anonymous` です。認可がないので、誰が書いたのかはサーバーにはわかりません。だから、自分で書いたばかりのメモでも、中身は伏せられています。
 
-## 工夫したところ
-
-### 新旧どちらの版にも応える
-
-実は、作り始める前に気になったことがありました。claude.ai は、もう新しい版で話しかけてくるのでしょうか。まだ `initialize` から始める古い版かもしれません。
-
-わからないので、両方に応えるようにしました。`_meta` にバージョンが載っていれば新しい版として、載っていなければ古い版として処理します。
-
-実際、登録のときには `python-httpx` から古い版の `initialize` が届いていました。両方に応えるようにしておいて正解でした。
-
-### ツールの失敗と、プロトコルのエラーを分ける
-
-書いていて面白かったのが、エラーの返し方が2種類あることです。
-
-- プロトコルのエラー：知らないツール名や、形の崩れた引数。JSON-RPC の `error` で返す
-- ツールとしての失敗：「そのメモは見つからない」「タイトルが長すぎる」。ふつうの結果として返し、`isError: true` を付ける
-
-後者は、LLM に「失敗した理由」を読ませて、言い直させるためのものです。だから `error` ではなく、読める文章として結果に入れるわけですね。
-
-```json
-{"content": [{"type": "text", "text": "メモ n9 は見つかりません"}], "isError": true, "resultType": "complete"}
-```
-
-### curl で叩いてみる
-
-claude.ai に繋ぐ前に、手元で確かめるなら curl で十分です。たとえば `server/discover` はこう叩きます。
-
-```sh
-curl http://127.0.0.1:8080/mcp \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -H 'MCP-Protocol-Version: 2026-07-28' \
-  -H 'Mcp-Method: server/discover' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}'
-```
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "result": {
-    "resultType": "complete",
-    "supportedVersions": ["2026-07-28"],
-    "capabilities": {"tools": {}},
-    "instructions": "メモを読み書きするサーバーです。read_note で一覧か1件を読み、write_note で新しいメモを書きます。",
-    "ttlMs": 3600000,
-    "cacheScope": "public",
-    "_meta": {"io.modelcontextprotocol/serverInfo": {"name": "advent-notes", "version": "0.1.0"}}
-  }
-}
-```
-
-`capabilities` に `tools` があるので、「このサーバーはツールを持っている」とクライアントに伝わります。
-
 ## 壊してみる
 
 最低限の3つは、本当に全部要るのでしょうか。わざと壊して、claude.ai がどうなるかを見てみます。
@@ -256,7 +202,7 @@ curl http://127.0.0.1:8080/mcp \
 - 1つの URL で POST を受けて、JSON-RPC で応える
 - `server/discover`：自分の名前、対応している版、機能を返す
 - `tools/list`：ツールの一覧と、引数の形（JSON Schema）を返す
-- `tools/call`：ツールを実行する。ツールとしての失敗は `isError` で返す
+- `tools/call`：ツールを実行して、結果を返す
 - 毎回のリクエストで、`_meta` の版とヘッダーを確かめる
 
 ネットワークの要件
