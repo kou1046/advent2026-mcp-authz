@@ -1,11 +1,11 @@
-// reqlog は届いたリクエストをすべて JSON Lines でログに出すだけのサーバー。
-// 12/3 で、claude.ai などの MCP クライアントが登録時に何をどの順で叩くかを観察するために使う。
+// authserver は 12/3 で使う、仮の認可サーバー。
+// 認可サーバーのメタデータ（RFC 8414）で登録・認可の入口を広告し、届いたリクエストを JSON Lines でログに出す。
+// ログイン画面はなく、/authorize に来たら「ここまで来ました」とだけ返す。本物の認可サーバーは 12/4 で立てる。
 //
-//	-mode=404  すべて 404 を返す（何も知らないクライアントが最初にどこを叩くか）
-//	-mode=401  401 + WWW-Authenticate と Protected Resource Metadata (RFC 9728) を返す
-//	           （認可サーバーのメタデータを探しに行くところまでフローを進める）
-//	-mode=as   401 モードに加えて、自分自身を偽の認可サーバーとして広告する
-//	           （登録・認可エンドポイントへのリダイレクトまでフローを進める）
+// MCP サーバーとは別のホストに置くので、MCP サーバーのメタデータ（RFC 9728）は返さない。
+//
+//	-dcr=false   メタデータから registration_endpoint を外し、/register も受け付けない
+//	-cimd=false  メタデータから client_id_metadata_document_supported を外す
 package main
 
 import (
@@ -27,25 +27,16 @@ import (
 const maxBody = 64 << 10
 
 type config struct {
-	mode         string
-	resourcePath string
-	dcr          bool
-	cimd         bool
+	dcr  bool
+	cimd bool
 }
 
 func main() {
 	addr := flag.String("addr", ":8080", "listen address")
 	var cfg config
-	flag.StringVar(&cfg.mode, "mode", "404", "response mode: 404, 401 or as")
-	flag.StringVar(&cfg.resourcePath, "resource-path", "/mcp", "path of the MCP endpoint advertised as the protected resource")
-	flag.BoolVar(&cfg.dcr, "dcr", true, "as mode: advertise registration_endpoint (DCR)")
-	flag.BoolVar(&cfg.cimd, "cimd", true, "as mode: advertise client_id_metadata_document_supported (CIMD)")
+	flag.BoolVar(&cfg.dcr, "dcr", true, "advertise registration_endpoint (DCR)")
+	flag.BoolVar(&cfg.cimd, "cimd", true, "advertise client_id_metadata_document_supported (CIMD)")
 	flag.Parse()
-
-	if cfg.mode != "404" && cfg.mode != "401" && cfg.mode != "as" {
-		fmt.Fprintf(os.Stderr, "unknown mode: %s\n", cfg.mode)
-		os.Exit(2)
-	}
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	var seq atomic.Int64
@@ -67,7 +58,7 @@ func main() {
 		)
 	})
 
-	logger.Info("listening", "addr", *addr, "mode", cfg.mode, "dcr", cfg.dcr, "cimd", cfg.cimd)
+	logger.Info("listening", "addr", *addr, "dcr", cfg.dcr, "cimd", cfg.cimd)
 	srv := &http.Server{Addr: *addr, Handler: h, ReadHeaderTimeout: 10 * time.Second}
 	if err := srv.ListenAndServe(); err != nil {
 		logger.Error("server stopped", "err", err)
@@ -76,51 +67,26 @@ func main() {
 }
 
 func respond(w http.ResponseWriter, r *http.Request, cfg config, body []byte) int {
-	if cfg.mode == "404" {
-		http.NotFound(w, r)
-		return http.StatusNotFound
+	switch path := r.URL.Path; {
+	case strings.HasPrefix(path, "/.well-known/oauth-authorization-server"),
+		strings.HasPrefix(path, "/.well-known/openid-configuration"):
+		return writeJSON(w, http.StatusOK, metadata(baseURL(r), cfg))
+	case path == "/register" && cfg.dcr:
+		return register(w, body)
+	case path == "/authorize":
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, "authserver: /authorize に到達しました。ここから先は実装していません。")
+		return http.StatusOK
+	case path == "/token":
+		return writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant"})
 	}
-
-	base := baseURL(r)
-	path := r.URL.Path
-
-	if strings.HasPrefix(path, "/.well-known/oauth-protected-resource") {
-		return writeJSON(w, http.StatusOK, map[string]any{
-			"resource":              base + cfg.resourcePath,
-			"authorization_servers": []string{base},
-		})
-	}
-
-	if cfg.mode == "as" {
-		switch {
-		case strings.HasPrefix(path, "/.well-known/oauth-authorization-server"),
-			strings.HasPrefix(path, "/.well-known/openid-configuration"):
-			return writeJSON(w, http.StatusOK, asMetadata(base, cfg))
-		case path == "/register" && cfg.dcr:
-			return register(w, body)
-		case path == "/authorize":
-			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintln(w, "reqlog: /authorize に到達しました。ここから先は実装していません。")
-			return http.StatusOK
-		case path == "/token":
-			return writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant"})
-		}
-	}
-
-	if !strings.HasPrefix(path, "/.well-known/") {
-		w.Header().Set("WWW-Authenticate",
-			fmt.Sprintf(`Bearer resource_metadata="%s/.well-known/oauth-protected-resource"`, base))
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return http.StatusUnauthorized
-	}
-
 	http.NotFound(w, r)
 	return http.StatusNotFound
 }
 
-// asMetadata は RFC 8414 の認可サーバーメタデータ。中身は登録・認可の入口を広告するためだけのもの。
-func asMetadata(base string, cfg config) map[string]any {
+// metadata は RFC 8414 の認可サーバーメタデータ。中身は登録・認可の入口を広告するためだけのもの。
+func metadata(base string, cfg config) map[string]any {
 	m := map[string]any{
 		"issuer":                                base,
 		"authorization_endpoint":                base + "/authorize",
@@ -139,7 +105,7 @@ func asMetadata(base string, cfg config) map[string]any {
 	return m
 }
 
-// register は RFC 7591 の登録応答を返す。送られてきたメタデータに client_id を付けて返すだけ。
+// register は RFC 7591 の登録応答を返す。送られてきたメタデータに client_id を付けて返すだけで、何も保存しない。
 func register(w http.ResponseWriter, body []byte) int {
 	var req map[string]any
 	if err := json.Unmarshal(body, &req); err != nil {
@@ -147,7 +113,7 @@ func register(w http.ResponseWriter, body []byte) int {
 	}
 	id := make([]byte, 8)
 	rand.Read(id)
-	req["client_id"] = "reqlog-" + hex.EncodeToString(id)
+	req["client_id"] = "authserver-" + hex.EncodeToString(id)
 	req["client_id_issued_at"] = time.Now().Unix()
 	return writeJSON(w, http.StatusCreated, req)
 }

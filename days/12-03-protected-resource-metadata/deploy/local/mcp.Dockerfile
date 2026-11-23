@@ -4,9 +4,9 @@ COPY go.mod ./
 COPY cmd ./cmd
 COPY internal ./internal
 RUN CGO_ENABLED=0 go build -trimpath -o /mcp ./cmd/mcp && \
-    CGO_ENABLED=0 go build -trimpath -o /reqlog ./cmd/reqlog
+    CGO_ENABLED=0 go build -trimpath -o /authserver ./cmd/authserver
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /mcp /mcp
-COPY --from=build /reqlog /reqlog
+COPY --from=build /authserver /authserver
 ENTRYPOINT ["/mcp"]

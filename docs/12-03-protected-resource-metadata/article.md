@@ -138,7 +138,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 前回と同じく、cloudflared のトンネルと nginx の後ろに置きます。今回は、MCP サーバーと仮の認可サーバーを、別々のトンネル（＝別々のホスト）で公開します。
 
-<p align="center"><img src="images/architecture-v4.drawio.svg" alt="claude.ai から MCP サーバーと仮の認可サーバーまでの構成" width="800"></p>
+<p align="center"><img src="images/architecture-v5.drawio.svg" alt="claude.ai から MCP サーバーと仮の認可サーバーまでの構成" width="800"></p>
 <p align="center"><sub>図3：MCP サーバーと仮の認可サーバーを、別々のトンネルで公開する。青い線は認可サーバーへの経路で、/authorize だけはユーザーのブラウザから直接来る</sub></p>
 
 | ホスト | 行き先 |

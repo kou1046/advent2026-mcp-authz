@@ -11,16 +11,11 @@ import (
 const metadataPrefix = "/.well-known/oauth-protected-resource"
 
 // serveMetadata は「このリソースを守っている認可サーバーはここ」というメタデータを返す。
-// 認可サーバーの URL を指定しなければ、同じホストの裏にいる偽の認可サーバー（reqlog）を指す。
+// 認可サーバーは別のホストにいるので、起動時に渡された URL をそのまま書く。
 func (s *server) serveMetadata(w http.ResponseWriter, r *http.Request) int {
-	base := baseURL(r)
-	as := s.authServer
-	if as == "" {
-		as = base
-	}
 	return writeJSON(w, http.StatusOK, map[string]any{
-		"resource":                 base + s.path,
-		"authorization_servers":    []string{as},
+		"resource":                 baseURL(r) + s.path,
+		"authorization_servers":    []string{s.authServer},
 		"bearer_methods_supported": []string{"header"},
 	})
 }

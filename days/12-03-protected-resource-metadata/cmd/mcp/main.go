@@ -43,7 +43,7 @@ func main() {
 	addr := flag.String("addr", "127.0.0.1:8080", "listen address")
 	path := flag.String("path", "/mcp", "path of the MCP endpoint")
 	origins := flag.String("allowed-origins", "", "comma separated Origin values to accept (requests without Origin are always accepted)")
-	authServer := flag.String("authorization-server", "", "authorization server URL advertised in the metadata (empty means the same host)")
+	authServer := flag.String("authorization-server", "", "authorization server URL advertised in the metadata (required)")
 	brk := flag.String("break", "", "break mode: no-initialize, no-discover, bad-version or bad-schema")
 	flag.Parse()
 
@@ -51,6 +51,10 @@ func main() {
 	case "", "no-initialize", "no-discover", "bad-version", "bad-schema":
 	default:
 		fmt.Fprintf(os.Stderr, "unknown break mode: %s\n", *brk)
+		os.Exit(2)
+	}
+	if *authServer == "" {
+		fmt.Fprintln(os.Stderr, "-authorization-server is required")
 		os.Exit(2)
 	}
 

@@ -2,6 +2,6 @@
 *.bkp
 # go build で日ごとのディレクトリにできるバイナリ
 /days/*/mcp
-/days/*/reqlog
+/days/*/authserver
 # Qiita 投稿用に書き出した PNG（リポジトリには入れない）
 docs/*/images/qiita/
