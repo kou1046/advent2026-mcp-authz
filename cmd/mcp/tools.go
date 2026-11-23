@@ -14,8 +14,8 @@ import (
 // 認可がまだないので、誰が書いても同じ owner になる。
 const anonymous = "anonymous"
 
-// 誰でも書ける場所に出すので、他人の書いた中身を別の人の LLM に返さない
-// （プロンプトインジェクションの持ち込み口にしない）。認可を入れるまでは全部伏せる。
+// 認可なしで一般公開しているので、誰が何を書いてくるかわからない。
+// プロンプトインジェクションの置き場にしないよう、認可を入れるまでは中身を保存せず全部伏せる。
 const masked = "（認可がないので伏せています）"
 
 const (
@@ -49,14 +49,14 @@ func (s *server) toolDefs() []map[string]any {
 		{
 			"name":        "read_note",
 			"title":       "メモを読む",
-			"description": "メモを読む。id を渡すとその1件、省略すると一覧を返す。認可がまだないので、タイトルと本文は伏せて返す。",
+			"description": "メモを読む。id を渡すとその1件、省略すると一覧を返す。認可がまだないので、タイトルと本文は伏せてある。",
 			"inputSchema": rs,
 			"annotations": map[string]any{"readOnlyHint": true},
 		},
 		{
 			"name":        "write_note",
 			"title":       "メモを書く",
-			"description": "新しいメモを書いて、その ID を返す。",
+			"description": "新しいメモを書いて、その ID を返す。認可がまだないので、タイトルと本文は伏せて保存する。",
 			"inputSchema": ws,
 			"annotations": map[string]any{"readOnlyHint": false, "destructiveHint": false, "idempotentHint": false},
 		},
@@ -85,9 +85,6 @@ func (s *server) callTool(ctx context.Context, p params) (map[string]any, *rpcEr
 			if err != nil {
 				return nil, internal(err)
 			}
-			for i := range list {
-				list[i] = mask(list[i])
-			}
 			return toolResult(map[string]any{"notes": list}), nil
 		}
 		n, err := s.store.Get(ctx, in.ID)
@@ -97,7 +94,7 @@ func (s *server) callTool(ctx context.Context, p params) (map[string]any, *rpcEr
 		if err != nil {
 			return nil, internal(err)
 		}
-		return toolResult(mask(n)), nil
+		return toolResult(n), nil
 
 	case "write_note":
 		var in struct {
@@ -115,18 +112,13 @@ func (s *server) callTool(ctx context.Context, p params) (map[string]any, *rpcEr
 		case utf8.RuneCountInString(in.Body) > maxBody:
 			return toolError(fmt.Sprintf("body は %d 文字までです", maxBody)), nil
 		}
-		n, err := s.store.Create(ctx, anonymous, in.Title, in.Body)
+		n, err := s.store.Create(ctx, anonymous, masked, masked)
 		if err != nil {
 			return nil, internal(err)
 		}
-		return toolResult(mask(n)), nil
+		return toolResult(n), nil
 	}
 	return nil, &rpcError{Code: codeInvalidParams, Message: "Unknown tool: " + p.Name}
-}
-
-func mask(n notes.Note) notes.Note {
-	n.Title, n.Body = masked, masked
-	return n
 }
 
 // toolResult は構造化した結果と、同じ中身の JSON テキストを両方返す。
