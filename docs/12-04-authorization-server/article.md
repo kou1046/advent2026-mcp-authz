@@ -173,6 +173,9 @@ Keycloak は、anonymous の登録に、最初から「クライアント登録�
 
 Trusted Hosts は、「誰から来たか」と「どこへ戻すか」を確かめます。
 
+<p align="center"><img src="images/trusted-hosts.drawio.svg" alt="Trusted Hosts は送り元を確かめず、戻り先が claude.ai かを確かめる" width="800"></p>
+<p align="center"><sub>図7：Keycloak から見える送り元は nginx なので、送り元は確かめない。そのかわり、戻り先が claude.ai でなければ弾く</sub></p>
+
 | 確かめること | 既定 | 今回 |
 |---|---|---|
 | 登録を送ってきた相手（接続元）が、信頼するホストの一覧にあるか | 確かめる | 確かめない |
@@ -196,6 +199,9 @@ Allowed Client Scopes は、anonymous の登録で頼めるスコープを、rea
 `openid` を許して試し直すと、今度は `service_account` で弾かれました。Keycloak は、引っかかったところで止めるので、1つずつしか教えてくれません。
 
 見比べてわかったのは、claude.ai が、Keycloak の案内板の `scopes_supported` に並んだスコープを、全部まとめて頼んでいたことです。実は claude.ai は、案内板のこんなところまで見ていました。`scopes_supported` は、案内板に載っている「うちで頼めるスコープの一覧」です。前回の仮の認可サーバーは載せていなかったので、気づきませんでした。
+
+<p align="center"><img src="images/allowed-scopes.drawio.svg" alt="claude.ai が頼んだスコープと、anonymous の登録で頼めるスコープの比較" width="800"></p>
+<p align="center"><sub>図8：claude.ai は案内板のスコープを全部頼んだが、そのうち openid と service_account は anonymous の登録では頼めなかった</sub></p>
 
 | スコープ | 案内板の `scopes_supported` | anonymous の登録で頼めるか（既定） | 頼めない理由 |
 |---|---|---|---|
@@ -231,7 +237,7 @@ anonymous の登録で頼めるスコープを、案内板の `scopes_supported`
 ブラウザは、Keycloak のログイン画面にたどり着きました。
 
 <p align="center"><img src="images/login-page.png" alt="Keycloak のログイン画面。MCP、Sign in to your account" width="600"></p>
-<p align="center"><sub>図7：Keycloak のログイン画面。上の「MCP」は realm の名前</sub></p>
+<p align="center"><sub>図9：Keycloak のログイン画面。上の「MCP」は realm の名前</sub></p>
 
 アドレスバーの URL には、前回の仮の認可サーバーのときにはなかったものが2つ付いていました。
 
@@ -250,14 +256,14 @@ Keycloak の管理画面で、realm「mcp」のクライアント一覧を見る
 もう1つ気になったのが、クライアントの種類です。
 
 <p align="center"><img src="images/client-credentials.png" alt="Credentials タブ。Client Authenticator は Client Id and Secret" width="600"></p>
-<p align="center"><sub>図8：登録された claude.ai は、シークレットを持つクライアントになっていた</sub></p>
+<p align="center"><sub>図10：登録された claude.ai は、シークレットを持つクライアントになっていた</sub></p>
 
 前回の仮の認可サーバーには、claude.ai は `token_endpoint_auth_method: none`（シークレットなし）で登録してきました。今回は「Client Id and Secret」、つまりシークレットありです。Keycloak のメタデータの `token_endpoint_auth_methods_supported` には、`none` がありません。手元で試すと、Keycloak は `none` での登録ならシークレットなしで登録してくれます。なので、claude.ai のほうが、Keycloak に合わせてシークレットありで登録してきたことになります。
 
 ついでに、claude.ai からもう一度「連携」を押してみると、「Claude」がもう1つ増えました。
 
 <p align="center"><img src="images/clients-two.png" alt="クライアント一覧に Claude が2つ" width="430"></p>
-<p align="center"><sub>図9：連携し直すと、別の Client ID で「Claude」がもう1つ登録された</sub></p>
+<p align="center"><sub>図11：連携し直すと、別の Client ID で「Claude」がもう1つ登録された</sub></p>
 
 DCR は、連携のたびに登録し直すようです。設定の画面の「アクセスの多いサーバーでは多数のクライアント登録が作成されます」は、このことですね。
 
