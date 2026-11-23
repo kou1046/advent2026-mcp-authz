@@ -1,5 +1,5 @@
 ---
-title: SDK なしで、claude.ai に登録できる最小の MCP サーバーを作る
+title: 最新の MCP 仕様の最小 MCP サーバーを自作して、claude.ai に繋いでみる
 tags: MCP JSON-RPC Go Claude
 ---
 
