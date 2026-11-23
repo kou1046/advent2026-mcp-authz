@@ -161,7 +161,9 @@ Requested scope 'openid' not trusted
 
 claude.ai は、登録のときに `openid` というスコープを頼んでいました。Keycloak の「Allowed Client Scopes」というポリシーは、認証なしの登録で頼めるスコープを、realm の既定のスコープに限っています。`openid` は、そこに入っていなかったのです。
 
-`openid` を足して試し直すと、今度は `service_account` で弾かれました。見比べてわかったのは、claude.ai が、Keycloak のメタデータの `scopes_supported` に並んだスコープを、全部まとめて頼んでいたことです。
+`openid` を足して試し直すと、今度は `service_account` で弾かれました。見比べてわかったのは、claude.ai が、Keycloak の案内板の `scopes_supported` に並んだスコープを、全部まとめて頼んでいたことです。
+
+実は claude.ai は、案内板のこんなところまで見ていました。スコープは、クライアントが「何をしたいか」を認可サーバーに伝える文字列です（`profile` や `email` など）。`scopes_supported` は、案内板に載っている「うちで頼めるスコープの一覧」です。前回の仮の認可サーバーは載せていなかったので、気づきませんでした。
 
 | スコープ | Keycloak のメタデータの `scopes_supported` | 登録で頼んでよい既定のスコープ |
 |---|---|---|
