@@ -255,20 +255,15 @@ claude.ai は、まず `server/discover` で新しい版を試して、だめな
 
 ## まとめ：claude.ai に登録できる (remote) MCP サーバーに最低限要るもの
 
-2026-11-23 時点の claude.ai で試した結果です。
-
-プロトコルの要件
+最新の仕様（2026-07-28）どおりなら、`initialize` はなくなり、`server/discover`・`tools/list`・`tools/call` の3つで足りるはずでした。ところが、2026-11-23 時点の claude.ai で試してみると、本当に最低限要ったのはこうでした。
 
 - 1つの URL で POST を受けて、JSON-RPC で応える
-- 古い版の `initialize` に応えて、`notifications/initialized` を受け取る。これがないと、claude.ai は話しかけてこない
+- 古い版の `initialize` に応えて、`notifications/initialized` を受け取る。これがないと、確認する係に止められて、claude.ai は話しかけてこない
 - `tools/list`：ツールの一覧と、引数の形（JSON Schema）を返す
 - `tools/call`：ツールを実行して、結果を返す
 - `server/discover`：あれば、claude.ai は最新の版で話してくれる。なくても古い版で動く
 
-ネットワークの要件
-
-- インターネットから IPv4 で届く `https://` の URL
-- 前で絞るなら、Anthropic の IP の範囲を通す
+仕様だけを見て最新の版だけを実装すると、claude.ai には門前払いされてしまいます。今 claude.ai 向けに MCP サーバーを書くなら、新旧どちらの版にも応えておくのが無難です。仕様が新しくなっても、クライアントがすぐに追いつくとは限りません。
 
 ## 次回
 
