@@ -6,7 +6,7 @@ tags: MCP OAuth Keycloak Claude
 
 ## 今日の問い
 
-[前回](https://qiita.com/kou1046/items/dcdedf12db7a88f255a7)は、MCP サーバーに 401 を返させて、claude.ai が認可サーバーを探しに行く様子を追いかけました。claude.ai はメタデータをたどって、ブラウザを `/authorize` まで連れて行ってくれました。ただ、待っていたのは「ここまで来ました」とだけ返すハリボテの認可サーバーです。
+[前回](https://qiita.com/kou1046/items/dcdedf12db7a88f255a7)は、MCP サーバーに 401 を返させて、claude.ai が認可サーバーを探しに行く様子を追いかけました。claude.ai はメタデータをたどって、ブラウザを `/authorize` まで連れて行ってくれました。ただ、待っていたのは「到達しました」とだけ返すハリボテの認可サーバーです。
 
 今回は、このハリボテを本物の認可サーバー（Keycloak）に置き換えます。
 
@@ -79,7 +79,7 @@ issuer にパスがなければ、どちらの決まりでも同じ場所なの�
 | 2 | `/.well-known/openid-configuration/realms/<realm 名>` | OpenID Connect（パスを差し込む） |
 | 3 | `/realms/<realm 名>/.well-known/openid-configuration` | OpenID Connect（パスの後ろに足す） |
 
-手元の Keycloak（26.4）で確かめると、1 と 3 は 200、2 だけ 404 でした。Keycloak は、RFC 8414 の置き場所（1）にもちゃんと置いてくれています。なので、claude.ai が仕様どおりに探すなら、最初の 1 で見つかるはずです。
+手元の Keycloak（26.4）で確かめると、1 と 3 は 200、2 だけ 404 でした。Keycloak は、RFC 8414 の置き場所（1）にも律儀に置いてくれています。なので、claude.ai が仕様どおりに探すなら、最初の 1 で見つかるはずです。
 
 
 ## 作ってみる
@@ -133,7 +133,7 @@ make down     # 試し終わったら、トンネルごと止める
 
 `make tunnel` で立ち上げて、MCP の URL をカスタムコネクターに登録してみます。
 
-追加のダイアログの3段階は、前回と同じく 401 → 200 → 200 で「サーバーが見つかりました」。設定の画面では、「OAuth クライアント」の「検出済み」が「自動的に登録」（DCR）に付きました。Keycloak は CIMD を広告していないので、狙いどおりです。
+追加のダイアログの3段階は、前回と同じく 401 → 200 → 200 で「サーバーが見つかりました」。設定の画面では、「OAuth クライアント」の「検出済み」が「自動的に登録」（DCR）に付きました。Keycloak は CIMD を広告していないので、狙いどおり。
 
 ### 登録できない
 
@@ -149,7 +149,7 @@ Policy 'Allowed Client Scopes' rejected request to client-registration service.
 Requested scope 'openid' not trusted
 ```
 
-事前に緩めておいたのとは、別の関門に止められていたのです。
+緩めておいたのとは、別の関門でした。関門、まだあったんかい。
 
 ### Keycloak の、DCR 登録の関門
 
@@ -190,7 +190,7 @@ default では一覧が空っぽなので、誰から来ても弾かれます。
 
 なので、送り元は、範囲で書ける nginx の IP 制限に任せました。Keycloak に届く登録は、すでに Anthropic の範囲から来たものだけです。
 
-そのかわり、戻り先は `claude.ai` だけにしました。手元で、nginx を通さずに Keycloak を直接叩き、戻り先をよそのドメインにして登録してみると、ちゃんと 403 で弾かれました。nginx の IP 制限が1段目、この戻り先の確かめが2段目、という守りです。「誰からの登録でも受け付けるが、戻り先は claude.ai だけ」という形です。
+そのかわり、戻り先は `claude.ai` だけにしました。手元で、nginx を通さずに Keycloak を直接叩き、戻り先をよそのドメインにして登録してみると、ちゃんと 403 で弾かれました。nginx の IP 制限が1段目、この戻り先の確かめが2段目、という守りです。つまり、誰からの登録でも受け付けるけれど、戻り先は claude.ai だけです。
 
 #### Allowed Client Scopes：ここで弾かれた関門
 
@@ -200,7 +200,7 @@ claude.ai は、登録のリクエストに `scope`（スコープ）を付け�
 
 Allowed Client Scopes は、anonymous の登録で頼めるスコープを、realm の Default と Optional のスコープ（新しいクライアントにいつも付くものと、頼まれたら付けられるもの）に限っています。`openid` は、そこに入っていませんでした。
 
-`openid` を許して試し直すと、今度は `service_account` で弾かれました。Keycloak は、引っかかったところで止めるので、1つずつしか教えてくれません。
+`openid` を許して試し直すと、今度は `service_account` で弾かれました。またか、と思いました。Keycloak は、引っかかったところで止めるので、1つずつしか教えてくれません。まとめて言ってほしかったです。
 
 見比べてわかったのは、claude.ai が、Keycloak の案内板の `scopes_supported`（「うちで頼めるスコープの一覧」）に並んだスコープを、全部まとめて頼んでいたことです。`openid` も `service_account` も、そこに載っていました。
 
@@ -213,13 +213,13 @@ Allowed Client Scopes は、anonymous の登録で頼めるスコープを、rea
 | `service_account` | ある | 頼めない | サービスアカウント専用で、新しいクライアントには付かないスコープ |
 | ほかの11個 | ある | 頼める | |
 
-Keycloak は、案内板では「使える」と言っているスコープを、anonymous の登録では頼ませない、という default だったわけです。claude.ai は案内板を素直に信じて頼んだだけなので、claude.ai が悪いわけではありません。
+案内板では「使える」と言っておいて、anonymous の登録では頼ませない。それ先に言ってくれ。claude.ai は案内板を素直に信じて頼んだだけなので、claude.ai が悪いわけではありません。
 
 #### どう直したか
 
 anonymous の登録で頼めるスコープを、案内板の `scopes_supported` そのものにしました。これで、案内板に書いてあることと、実際に頼めることが一致します。
 
-これで、やっと登録が通りました。
+3回目で、やっと登録が通りました。長かったです。
 
 ただ、これは許すほうに寄せた直し方です。どこから来たかわからないクライアントでも、`service_account` や `offline_access`（リフレッシュトークン）を自分に割り当てられるようになりました。今回は戻り先を claude.ai だけに絞っているので、大きな問題はありません。本番なら逆に、案内板から要らないスコープを外す（`scopes_supported` を絞る）ほうが筋だと思います。
 
@@ -234,7 +234,7 @@ anonymous の登録で頼めるスコープを、案内板の `scopes_supported`
 | 5 | ユーザー（ブラウザ） | Keycloak：ログイン画面の入口（`/realms/mcp/protocol/openid-connect/auth`） | 200 |
 | 6 | ユーザー（ブラウザ） | Keycloak：`/resources/…`（CSS、JavaScript、フォント） | 200 |
 
-3 で、claude.ai は RFC 8414 の置き場所（パスを差し込む形）を最初に見に来て、一発で案内板を見つけました。404 は1つもありません。窓口のパスは前回の仮の認可サーバーとまったく違いますが、案内板に書いてあるので、claude.ai は迷わずたどり着いています。
+3 で、claude.ai は RFC 8414 の置き場所（パスを差し込む形）を最初に見に来て、一発で案内板を見つけました。てっきり 404 が並ぶと思っていたのですが、ハズレでした。窓口のパスは前回の仮の認可サーバーとまったく違いますが、案内板に書いてあるので、claude.ai は迷わずたどり着いています。
 
 ### ログイン画面
 
@@ -243,7 +243,7 @@ anonymous の登録で頼めるスコープを、案内板の `scopes_supported`
 <p align="center"><img src="images/login-page.png" alt="Keycloak のログイン画面。MCP、Sign in to your account" width="600"></p>
 <p align="center"><sub>図9：Keycloak のログイン画面。上の「MCP」は realm の名前</sub></p>
 
-アドレスバーの URL には、前回の仮の認可サーバーのときにはなかったものが2つ付いていました。
+アドレスバーの URL には、前回の仮の認可サーバーのときとは違うところが3つありました。
 
 | パラメーター | 今回の値 | 前回 |
 |---|---|---|
@@ -255,27 +255,27 @@ anonymous の登録で頼めるスコープを、案内板の `scopes_supported`
 
 ### claude.ai は登録されたのか
 
-Keycloak の管理画面で、realm「mcp」のクライアント一覧を見ると、「Claude」という名前のクライアントが増えていました。Client ID は、ログイン画面の URL の `client_id` と同じです。
+Keycloak の管理画面で、realm「mcp」のクライアント一覧を見ると、「Claude」という名前のクライアントが増えていました。おお、本当にいる。Client ID は、ログイン画面の URL の `client_id` と同じです。
 
 もう1つ気になったのが、クライアントの種類です。
 
 <p align="center"><img src="images/client-credentials.png" alt="Credentials タブ。Client Authenticator は Client Id and Secret" width="600"></p>
 <p align="center"><sub>図10：登録された claude.ai は、シークレットを持つクライアントになっていた</sub></p>
 
-前回の仮の認可サーバーには、claude.ai は `token_endpoint_auth_method: none`（シークレットなし）で登録してきました。今回は「Client Id and Secret」、つまりシークレットありです。Keycloak のメタデータの `token_endpoint_auth_methods_supported` には、`none` がありません。手元で試すと、Keycloak は `none` での登録ならシークレットなしで登録してくれます。なので、claude.ai のほうが、Keycloak に合わせてシークレットありで登録してきたことになります。
+前回の仮の認可サーバーには、claude.ai は `token_endpoint_auth_method: none`（シークレットなし）で登録してきました。今回は「Client Id and Secret」、つまりシークレットありです。Keycloak のメタデータの `token_endpoint_auth_methods_supported` には、`none` がありません。手元で試すと、Keycloak は `none` での登録ならシークレットなしで登録してくれます。なので、claude.ai のほうが Keycloak に合わせて、しれっとシークレットありで登録してきたわけです。
 
-ついでに、claude.ai からもう一度「連携」を押してみると、「Claude」がもう1つ増えました。
+ついでに、claude.ai からもう一度「連携」を押してみました。え、増えた。「Claude」がもう1つ登録されています。
 
 <p align="center"><img src="images/clients-two.png" alt="クライアント一覧に Claude が2つ" width="430"></p>
 <p align="center"><sub>図11：連携し直すと、別の Client ID で「Claude」がもう1つ登録された</sub></p>
 
-DCR は、連携のたびに登録し直すようです。設定の画面の「アクセスの多いサーバーでは多数のクライアント登録が作成されます」は、このことですね。
+DCR は、連携のたびに登録し直すようです。押すたびに増えるので、ちょっと怖いです。設定の画面の「アクセスの多いサーバーでは多数のクライアント登録が作成されます」は、このことですね。
 
 ## 感想
 
 ### 標準のおかげで、差し替えるだけだった
 
-仮の認可サーバーを Keycloak に置き換えても、MCP サーバーのコードは1行も変えていません。変えたのは、メタデータの `authorization_servers` に書く URL だけです。claude.ai も、相手が仮の認可サーバーか Keycloak かを気にせず、同じ手順でたどって来ました。間の取り決め（RFC 9728、8414、7591）が標準なので、両側とも差し替えに気づかないわけです。これ、地味にすごくね？と思いました。
+仮の認可サーバーを Keycloak に置き換えても、MCP サーバーのコードは1行も変えていません。変えたのは、メタデータの `authorization_servers` に書く URL だけです。claude.ai も、相手が仮の認可サーバーか Keycloak かを気にせず、同じ手順でたどって来ました。間の取り決め（RFC 9728、8414、7591）が標準なので、両側とも差し替えに気づかないわけです。これ、地味にすごくね？
 
 作る側は、相手がどのクライアントでも、どの認可サーバーでも、同じ決まりどおりに作ればいい。使う側も、相手を選ばずに繋げる。OAuth や OpenID Connect がここまで広まったのは、この「差し替えがきく」おかげなんだな、と今回の実装で痛感しました。
 
