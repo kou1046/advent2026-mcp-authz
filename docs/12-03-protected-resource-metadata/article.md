@@ -20,7 +20,7 @@ MCP サーバーが「認可が要る」と返したとき、claude.ai はどう
 
 前々回の流れを、おさらいしておきます。今回確かめるのは、このうちログイン画面の入口までです。
 
-<p align="center"><img src="images/recap-steps.drawio.svg" alt="claude.ai がログイン画面の入口にたどり着くまで" width="600"></p>
+<p align="center"><img src="images/recap-flow.drawio.svg" alt="claude.ai がログイン画面の入口にたどり着くまで" width="700"></p>
 <p align="center"><sub>図1：①〜⑤の順に、MCP サーバー、認可サーバーとやりとりして、ログイン画面の入口にたどり着く</sub></p>
 
 ### 401 と WWW-Authenticate
