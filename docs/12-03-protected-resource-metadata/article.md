@@ -255,7 +255,7 @@ PKCE の `code_verifier`（`code_challenge` の元になる秘密の値）は、
 | CIMD と DCR | 自動的に登録 | CIMD | 同上 |
 | DCR だけ | 自動的に登録（既定） | DCR | `authserver-7d22…`（`/register` で払い出したもの） |
 | DCR だけ | Claude の公開アイデンティティ | DCR | `authserver-0f76…` |
-| DCR だけ | 独自の OAuth クライアント | 独自 | `my-client`（入力したもの） |
+| DCR だけ | 独自の OAuth クライアント | 事前登録（静的） | `my-client`（入力したもの） |
 
 「自動的に登録」（DCR）を選んでも、認可サーバーが CIMD を広告していれば CIMD で来ました。逆に、CIMD を広告していないと、「Claude の公開アイデンティティ」を選んでも DCR で来ました。どちらも、エラーや警告は出ません。CIMD と DCR のどちらになるかは、画面の選択ではなく、認可サーバーの広告で決まっているようです。「独自の OAuth クライアント」だけは選んだとおりで、`/register` は来ず、入力した `client_id` で `/authorize` に来ました。
 
