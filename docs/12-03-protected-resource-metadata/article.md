@@ -47,7 +47,7 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 ### その先：認可サーバーのメタデータ（RFC 8414）
 
-`authorization_servers` を知ったクライアントは、今度は認可サーバーのメタデータを取りに行きます。そこに、ログイン画面の入口（`authorization_endpoint`）や、クライアントの登録方法が書いてあります。本物の認可サーバーは次回立てるので、今回は偽物で受けます。
+`authorization_servers` を知ったクライアントは、今度は認可サーバーのメタデータを取りに行きます。そこに、ログイン画面の入口（`authorization_endpoint`）や、クライアントの登録方法が書いてあります。本物の認可サーバーは次回立てるので、今回は仮のもので受けます。
 
 > [!NOTE]
 > OAuth なのに、ログイン（認証）もするの？
@@ -64,10 +64,10 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 ### 作るもの
 
-前回の MCP サーバーに手を入れるのに加えて、今回は認可サーバーを新しく足します。ただし、認可サーバーは偽物です。
+前回の MCP サーバーに手を入れるのに加えて、今回は認可サーバーを新しく足します。ただし、認可サーバーは仮のものです。
 
-<p align="center"><img src="images/build-hosts-v3.drawio.svg" alt="作成する MCP サーバーと偽の認可サーバー" width="800"></p>
-<p align="center"><sub>図2：作成するもの。MCP サーバーは 401 とメタデータだけを返し、その先は偽の認可サーバーが受ける</sub></p>
+<p align="center"><img src="images/build-hosts-v3.drawio.svg" alt="作成する MCP サーバーと仮の認可サーバー" width="800"></p>
+<p align="center"><sub>図2：作成するもの。MCP サーバーは 401 とメタデータだけを返し、その先は仮の認可サーバーが受ける</sub></p>
 
 #### MCP サーバー（前回のものに追加）
 
@@ -84,9 +84,9 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 `initialize` でも `server/discover` でも `tools/call` でも、メソッドを問わず同じです。通知（`notifications/…`）も 401 になります。
 
-#### 認可サーバー（新規、偽物）
+#### 認可サーバー（新規、仮）
 
-本物の認可サーバーは次回立てるので、今回は、届いたリクエストをログに出しながら、それらしい返事をするだけの偽物を置きます。ログイン画面はありません。
+本物の認可サーバーは次回立てるので、今回は、届いたリクエストをログに出しながら、それらしい返事をするだけの、仮のものを置きます。ログイン画面はありません。
 
 | リクエスト | 返すもの |
 |---|---|
@@ -98,12 +98,12 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 ### 公開する
 
-前回と同じく、cloudflared のトンネルと nginx の後ろに置きます。今回は、MCP サーバーと偽の認可サーバーを、別々のトンネル（＝別々のホスト）で公開します。
+前回と同じく、cloudflared のトンネルと nginx の後ろに置きます。今回は、MCP サーバーと仮の認可サーバーを、別々のトンネル（＝別々のホスト）で公開します。
 
 | ホスト | 行き先 |
 |---|---|
 | `https://aaa.trycloudflare.com` | MCP サーバー（`/mcp` とメタデータ） |
-| `https://bbb.trycloudflare.com` | 偽の認可サーバー（メタデータ、`/register`、`/authorize` など） |
+| `https://bbb.trycloudflare.com` | 仮の認可サーバー（メタデータ、`/register`、`/authorize` など） |
 
 ホストを分けたのは、claude.ai がメタデータの `authorization_servers` を本当にたどっているのかを確かめるためです。同じホストに置くと、「同じホストだろう」と当て推量で来ても区別がつきません。実際、古い MCP の仕様（2025-03-26）には、メタデータがなければ MCP サーバーと同じホストを認可サーバーとみなす、という決まりがありました。それに、ふつうは MCP サーバーと認可サーバーは別のホストにいます。
 
@@ -117,16 +117,16 @@ WWW-Authenticate: Bearer resource_metadata="https://example.com/.well-known/oaut
 
 ログイン画面は、ユーザー本人が見て操作するものです。なので claude.ai は、`/authorize` だけは自分で取りに行かず、ユーザーのブラウザをそこへ送り出します。前回と同じく claude.ai の IP だけを通していると、ユーザーのブラウザが門前払いされてしまうので、`/authorize` だけは制限を外しています。今回の中身は「ここまで来ました」の文字だけです。
 
-<p align="center"><img src="images/architecture-v4.drawio.svg" alt="claude.ai から MCP サーバーと偽の認可サーバーまでの構成" width="800"></p>
-<p align="center"><sub>図3：MCP サーバーと偽の認可サーバーを、別々のトンネルで公開する。青い線は認可サーバーへの経路で、/authorize だけはユーザーのブラウザから直接来る</sub></p>
+<p align="center"><img src="images/architecture-v4.drawio.svg" alt="claude.ai から MCP サーバーと仮の認可サーバーまでの構成" width="800"></p>
+<p align="center"><sub>図3：MCP サーバーと仮の認可サーバーを、別々のトンネルで公開する。青い線は認可サーバーへの経路で、/authorize だけはユーザーのブラウザから直接来る</sub></p>
 
 ### 実際に作ったもの
 
 - https://github.com/kou1046/advent2026-mcp-authz/tree/main/days/12-03-protected-resource-metadata
 
 ```sh
-make tunnel             # MCP サーバー・偽の認可サーバー・nginx・cloudflared（2本）を立ち上げる
-make tunnel CIMD=false  # 偽の認可サーバーが CIMD を広告しないようにする（DCR=false も同じ）
+make tunnel             # MCP サーバー・仮の認可サーバー・nginx・cloudflared（2本）を立ち上げる
+make tunnel CIMD=false  # 仮の認可サーバーが CIMD を広告しないようにする（DCR=false も同じ）
 make logs
 make down
 ```
@@ -168,6 +168,6 @@ make down
 
 ## 次回
 
-今回、claude.ai はログイン画面の入口まで来て止まりました。偽の認可サーバーには、ログイン画面がないからです。
+今回、claude.ai はログイン画面の入口まで来て止まりました。仮の認可サーバーには、ログイン画面がないからです。
 
 次回は、本物の認可サーバー（Keycloak）を立てて、ログイン画面を出すところまで進めます。
