@@ -111,6 +111,9 @@ claude.ai は、手元の PC ではなく Anthropic のサーバーから繋い�
 
 もう1つ、全部公開するものなので、他人が書いたメモがそのまま別の人の Claude に返るのは怖いです。メモに何が仕込まれているかわからず、色々なプロンプトインジェクションの入り口になります。なので、認可を実装するまでは、読むときにタイトルと本文を全部伏せることにします。
 
+<p align="center"><img src="images/masking.drawio.svg" alt="伏せないと、知らない人が仕込んだメモが自分の Claude に届く。伏せると届かない" width="800"></p>
+<p align="center"><sub>図4：伏せないと、知らない人が仕込んだ指示が自分の Claude に届く</sub></p>
+
 ```json
 {"id": "n1", "owner": "anonymous", "title": "（認可がないので伏せています）", "body": "（認可がないので伏せています）", "created_at": "…"}
 ```
@@ -168,7 +171,7 @@ curl http://127.0.0.1:8080/mcp \
 ### 公開する
 
 <p align="center"><img src="images/architecture.drawio.svg" alt="claude.ai から MCP サーバーまでの構成" width="720"></p>
-<p align="center"><sub>図4：claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー</sub></p>
+<p align="center"><sub>図5：claude.ai → Cloudflare → cloudflared → nginx → MCP サーバー</sub></p>
 
 ネットワークの要件を満たすために、Cloudflare のトンネル（cloudflared）で一時的に外へ出しました。`https://….trycloudflare.com` の URL がもらえて、IPv4 でも届きます。
 
@@ -198,7 +201,7 @@ claude.ai は、もう新しい版で話しかけてきていました。`Claude
 <!-- TODO: 中身を伏せる版でスクショ（chat-write-read.png）と下のログを撮り直す。今の画像は伏せる前のもの -->
 
 <p align="center"><img src="images/chat-write-read.png" alt="claude.ai でメモを書いて一覧を見せてもらう" width="600" style="border: 1px solid #999"></p>
-<p align="center"><sub>図5：「メモを書く」「メモを読む」を順に使って、書いたメモの一覧を返してくれた</sub></p>
+<p align="center"><sub>図6：「メモを書く」「メモを読む」を順に使って、書いたメモの一覧を返してくれた</sub></p>
 
 画面には、ツール名の `write_note` ではなく「メモを書く」と出ていますね。`tools/list` で返した `title` が、そのまま表示に使われています。
 
