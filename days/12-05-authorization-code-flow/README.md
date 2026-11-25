@@ -38,6 +38,8 @@ make smoke    # curl で一通り叩く
 
 ## 構成
 
+<p align="center"><img src="../../docs/12-05-authorization-code-flow/images/architecture.drawio.svg" alt="claude.ai から MCP サーバーと Keycloak までの構成" width="800"></p>
+
 - cloudflared：MCP サーバー用と認可サーバー用の2本
 - nginx：12/4 と同じ。加えて、`/token` に届いたリクエストの本文をログに出す（Authorization ヘッダーは方式だけ）
 - MCP サーバー：Bearer が付いていれば中身を確かめずに通す（検証は 12/6）。トークンの中身（`iss`、`aud`、`sub`、`scope` など）をログに出す。`-resource` で、メタデータの `resource` を好きな値にできる
