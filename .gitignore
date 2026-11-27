@@ -3,5 +3,7 @@
 # go build で日ごとのディレクトリにできるバイナリ
 /days/*/mcp
 /days/*/authserver
+# keycloak-setup.sh が書き出す、ランダムに作ったパスワード
+/days/*/.passwords
 # Qiita 投稿用に書き出した PNG（リポジトリには入れない）
 docs/*/images/qiita/
