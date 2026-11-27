@@ -1,0 +1,2 @@
+# make realm-off が置く、止めた realm の設定（試し終わったら make realm-on で消す）
+*.conf

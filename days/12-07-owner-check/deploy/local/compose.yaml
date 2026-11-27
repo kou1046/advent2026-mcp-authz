@@ -1,0 +1,84 @@
+# 手元で MCP サーバーを試す構成。MCP サーバーと認可サーバー（Keycloak）を、別々のトンネル（＝別々のホスト）で公開する。
+#   claude.ai → Cloudflare ┬ cloudflared-mcp → nginx:80（IP で絞る） → mcp（トークンを確かめる。公開鍵は keycloak から直接読む）
+#                          └ cloudflared-as  → nginx:81（ブラウザが来るところだけ誰でも） → keycloak
+#   mcp → db（Postgres。メモを持ち主ごとに置く）
+# 手元からは mcp を 127.0.0.1:8080、Keycloak を 127.0.0.1:8180、Postgres を 127.0.0.1:5432 で直接叩ける（管理画面もこちら）。
+# nginx の 8081 と 8082 は、claude.ai の範囲以外 403。
+name: advent-mcp
+
+services:
+  mcp:
+    build:
+      context: ../..
+      dockerfile: deploy/local/mcp.Dockerfile
+    image: advent-mcp-12-07
+    # メタデータに並べる認可サーバー（Keycloak の realm の issuer）。Makefile が、REALMS の順に組み立てて渡す。
+    # トークンを確かめる公開鍵は、コンテナの中から Keycloak を直接読みに行く（トンネル越しは nginx が通さない）。
+    command: ["-addr", ":8080", "-authorization-server", "${ISSUERS:-}", "-authorization-server-metadata", "${AS_METADATA:-}",
+      "-database-url", "postgres://mcp:mcp@db:5432/mcp", "-resource", "${RESOURCE:-}", "-audience", "${AUDIENCE:-}", "-break", "${BREAK:-}"]
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [local]
+
+  # メモを置く DB。起動時に db/schema.sql を流す。ボリュームは持たないので、作り直すと中身は消える。
+  db:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: mcp
+      POSTGRES_PASSWORD: mcp
+      POSTGRES_DB: mcp
+    volumes: ["../../db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro"]
+    ports: ["127.0.0.1:5432:5432"]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "mcp"]
+      interval: 2s
+      retries: 30
+    networks: [local]
+
+  # 認可サーバー。開発モード（データはコンテナの中だけ）なので、作り直すたびに realm も作り直す（keycloak-setup.sh）。
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4.7
+    command: ["start-dev"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      # 外から見える URL。issuer やログイン画面の URL はこれで組み立てられる。make tunnel がトンネルの URL を渡す。
+      KC_HOSTNAME: ${AUTH_SERVER:-http://127.0.0.1:8082}
+      # 管理画面は外に出さず、手元から開く。
+      KC_HOSTNAME_ADMIN: http://127.0.0.1:8180
+      KC_PROXY_HEADERS: xforwarded
+      # issuer は外から見える URL のまま、jwks_uri などは来たリクエストのホストで組み立てる。
+      # MCP サーバーがコンテナの中（http://keycloak:8080）からメタデータを読むと、jwks_uri もコンテナの中の URL になる。
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+    ports: ["127.0.0.1:8180:8080"]
+    networks: [local]
+
+  nginx:
+    image: nginx:1.30.7-alpine
+    volumes: ["./nginx.conf:/etc/nginx/conf.d/default.conf:ro", "./down:/etc/nginx/down:ro"]
+    ports: ["127.0.0.1:8081:80", "127.0.0.1:8082:81"]
+    depends_on: [mcp, keycloak]
+    networks: [local]
+
+  cloudflared-mcp:
+    image: cloudflare/cloudflared:${CLOUDFLARED_VERSION:-2025.11.1}
+    command: ["tunnel", "--no-autoupdate", "--url", "http://nginx:80"]
+    profiles: [tunnel]
+    depends_on: [nginx]
+    networks:
+      # nginx が CF-Connecting-IP を信じる相手を、この IP に固定する。
+      local: { ipv4_address: 172.28.0.10 }
+
+  cloudflared-as:
+    image: cloudflare/cloudflared:${CLOUDFLARED_VERSION:-2025.11.1}
+    command: ["tunnel", "--no-autoupdate", "--url", "http://nginx:81"]
+    profiles: [tunnel]
+    depends_on: [nginx]
+    networks:
+      local: { ipv4_address: 172.28.0.11 }
+
+networks:
+  local:
+    ipam:
+      config: [{ subnet: 172.28.0.0/24 }]
