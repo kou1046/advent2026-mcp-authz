@@ -1,0 +1,11 @@
+# db/ の SQL から、Go のコードを internal/notes/db に作る（make generate）。
+version: "2"
+sql:
+  - engine: postgresql
+    schema: db/schema.sql
+    queries: db/query.sql
+    gen:
+      go:
+        package: db
+        out: internal/notes/db
+        sql_package: pgx/v5
