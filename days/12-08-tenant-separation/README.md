@@ -48,6 +48,8 @@ make smoke    # curl で一通り叩く（テナントと持ち主の両方で�
 
 ## 構成
 
+<p align="center"><img src="../../docs/12-08-tenant-separation/images/architecture.drawio.svg" alt="claude.ai から MCP サーバー、Postgres、Keycloak までの構成。MCP サーバー用のトンネルは3本で、MCP サーバーはホスト名でテナントを見分ける" width="800"></p>
+
 - cloudflared：MCP サーバー用が3本（やり方2 用、テナント A 用、テナント B 用）と、認可サーバー用が1本
   - はじめはパス（`/t/tenant-a/mcp`）でテナントを分けたが、claude.ai ではログインまで進んだあと繋がらなかった。そのため、ホスト名で分けている
 - nginx：12/7 と同じ。MCP のトンネル3本は、同じ口（80）で受ける。realm 3つ分の入口を通す
